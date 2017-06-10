@@ -19,6 +19,8 @@
 #ifndef __VU_H__
 #define __VU_H__
 
+#include "Vif.h"
+
 #define REG_STATUS_FLAG	16
 #define REG_MAC_FLAG	17
 #define REG_CLIP_FLAG	18
@@ -158,11 +160,11 @@ typedef struct {
 } _VURegsNum;
 
 extern VURegs* g_pVU1;
-extern VURegs VU0;
+extern PCSX2_ALIGNED16_DECL(VURegs VU0);
 
 #define VU1 (*g_pVU1)
 
-__forceinline u32* GET_VU_MEM(VURegs* VU, u32 addr)
+extern __forceinline u32* GET_VU_MEM(VURegs* VU, u32 addr)
 {
 	if( VU == g_pVU1 ) return (u32*)(VU1.Mem+(addr&0x3fff));
 	
@@ -170,5 +172,12 @@ __forceinline u32* GET_VU_MEM(VURegs* VU, u32 addr)
 	
 	return (u32*)(VU0.Mem+(addr&0x0fff));	
 }
+
+
+// various fixes to enable per game (all are off by default)
+#define VUFIX_SIGNEDZERO        1
+#define VUFIX_EXTRAFLAGS        2
+#define VUFIX_XGKICKDELAY2      4
+extern int g_VUGameFixes;
 
 #endif /* __VU_H__ */

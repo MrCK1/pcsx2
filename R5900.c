@@ -22,7 +22,7 @@
 #include "Common.h"
 #include "Memory.h"
 #include "Hw.h"
-#include "Debug.h"
+#include "DebugTools/Debug.h"
 #include "R3000A.h"
 #include "VUmicro.h"
 #include "GS.h"
@@ -39,6 +39,7 @@ R5900cpu *Cpu;
 
 int EEsCycle;
 u32 EEoCycle, IOPoCycle;
+u32 bExecBIOS = 0; // set if the BIOS has already been executed
 
 extern u32 dwSaveVersion;
 
@@ -47,17 +48,20 @@ int cpuInit()
 	int ret;
 
 	SysPrintf("PCSX2 v" PCSX2_VERSION " save ver: %x\n", dwSaveVersion);
-	SysPrintf("Color Legend: White - PCSX2 message\n");
+	/*SysPrintf("Color Legend: White - PCSX2 message\n");
 	SysPrintf(COLOR_GREEN "              Green - EE sio2 printf\n" COLOR_RESET);
-	SysPrintf(COLOR_RED   "              Red   - IOP printf\n" COLOR_RESET);
-
-    printf("%d", (u32)&cpuRegs.pc - (u32)&cpuRegs);
+	SysPrintf(COLOR_RED   "              Red   - IOP printf\n" COLOR_RESET);*/
+    SysPrintf("EE pc offset: 0x%x, PSX pc offset: 0x%x\n", (u32)&cpuRegs.pc - (u32)&cpuRegs, (u32)&psxRegs.pc - (u32)&psxRegs);
 
 	InitFPUOps();
-	cpudetectInit();
 
 	cpuRegs.constzero = 0;
+#ifdef PCSX2_NORECBUILD
+	Cpu = &intCpu;
+#else
+	cpudetectInit();
 	Cpu = CHECK_EEREC ? &recCpu : &intCpu;
+#endif
 
 	ret = Cpu->Init();
 	if (ret == -1 && CHECK_EEREC) {
@@ -67,7 +71,7 @@ int cpuInit()
 		ret = Cpu->Init();
 	}
 
-#ifdef WIN32_VIRTUAL_MEM
+#ifdef PCSX2_VIRTUAL_MEM
 	if (memInit() == -1) {
 		PROCESS_INFORMATION pi;
 		STARTUPINFO si;
@@ -97,7 +101,7 @@ int cpuInit()
 	if (hwInit() == -1) return -1;
 	if (vu0Init() == -1) return -1;
 	if (vu1Init() == -1) return -1;
-#ifndef WIN32_VIRTUAL_MEM
+#ifndef PCSX2_VIRTUAL_MEM
 	if (memInit() == -1) return -1;
 #endif
 
@@ -212,10 +216,13 @@ void cpuException(u32 code, u32 bd) {
 }
 
 void cpuTlbMiss(u32 addr, u32 bd, u32 excode) {
-	SysPrintf("cpuTlbMiss %x, %x, status=%x, code=%x\n", cpuRegs.pc, cpuRegs.cycle, cpuRegs.CP0.n.Status.val, excode);
+    SysPrintf("cpuTlbMiss %x, %x, addr: %x, status=%x, code=%x\n", cpuRegs.pc, cpuRegs.cycle, addr, cpuRegs.CP0.n.Status.val, excode);
 	if (bd) {
 		SysPrintf("branch delay!!\n");
 	}
+
+    assert(0); // temporary
+
 	cpuRegs.CP0.n.BadVAddr = addr;
 	cpuRegs.CP0.n.Context &= 0xFF80000F;
 	cpuRegs.CP0.n.Context |= (addr >> 9) & 0x007FFFF0;
@@ -342,8 +349,8 @@ void _cpuTestInterrupts() {
 	TESTINT(2, gsInterrupt);
 	TESTINT(3, ipu0Interrupt);
 	TESTINT(4, ipu1Interrupt);
-	TESTINT(5, EEsif0Interrupt);
-	TESTINT(6, EEsif1Interrupt);
+	/*TESTINT(5, EEsif0Interrupt);
+	TESTINT(6, EEsif1Interrupt);*/
 	TESTINT(8, SPRFROMinterrupt);
 	TESTINT(9, SPRTOinterrupt);
 
@@ -380,57 +387,23 @@ static void _cpuTestTIMR() {
 // if cpuRegs.cycle is greater than this cycle, should check cpuBranchTest for updates
 u32 g_nextBranchCycle = 0;
 u32 s_lastvsync[2];
-extern u8 g_globalXMMSaved, g_globalMMXSaved;
+extern u8 g_globalXMMSaved;
+X86_32CODE(extern u8 g_globalMMXSaved;)
+
 u32 loaded = 0;
-
-void IntcpuBranchTest()
-{
-	assert( !g_globalXMMSaved && !g_globalMMXSaved );
-	g_EEFreezeRegs = 0;
-
-	g_nextBranchCycle = cpuRegs.cycle + EE_WAIT_CYCLE;
-
-	if ((int)(cpuRegs.cycle - nextsCounter) >= nextCounter)
-		rcntUpdate();
-
-	if (cpuRegs.interrupt)
-		_cpuTestInterrupts();
-
-	if( (int)(g_nextBranchCycle-nextsCounter) >= nextCounter )
-		g_nextBranchCycle = nextsCounter+nextCounter;
-
-//#ifdef CPU_LOG
-//	cpuTestMissingHwInts();
-//#endif
-	_cpuTestTIMR();
-
-	EEsCycle += cpuRegs.cycle - EEoCycle;
-	EEoCycle = cpuRegs.cycle;
-
-	psxCpu->ExecuteBlock();
-	
-	if (VU0.VI[REG_VPU_STAT].UL & 0x1) {
-		Cpu->ExecuteVU0Block();
-	}
-	if (VU0.VI[REG_VPU_STAT].UL & 0x100) {
-		Cpu->ExecuteVU1Block();
-	}
-
-	if( (int)cpuRegs.cycle-(int)g_nextBranchCycle > 0 )
-		g_nextBranchCycle = cpuRegs.cycle+1;
-
-	assert( !g_globalXMMSaved && !g_globalMMXSaved );
-	g_EEFreezeRegs = 1;
-}
+u32 g_MTGSVifStart = 0, g_MTGSVifCount=0;
+extern void gsWaitGS();
 
 void cpuBranchTest()
 {
-	assert( !g_globalXMMSaved && !g_globalMMXSaved );
+#ifndef PCSX2_NORECBUILD
+	assert( !g_globalXMMSaved X86_32CODE(&& !g_globalMMXSaved) );
 	g_EEFreezeRegs = 0;
+#endif
 
-//	if( !loaded && cpuRegs.cycle > 0x08000000 ) {
+//	if( !loaded && cpuRegs.cycle > 0x20000000 ) {
 //		char strstate[255];
-//		sprintf(strstate, "sstates/%8.8x.000", ElfCRC);
+//		sprintf(strstate, "sstates/%8.8X.000", ElfCRC);
 //		LoadState(strstate);
 //		loaded = 1;
 //	}
@@ -440,6 +413,14 @@ void cpuBranchTest()
 	if ((int)(cpuRegs.cycle - nextsCounter) >= nextCounter)
 		rcntUpdate();
 
+    // stall mtgs if it is taking too long
+    if( g_MTGSVifCount > 0 ) {
+        if( cpuRegs.cycle-g_MTGSVifStart > g_MTGSVifCount ) {
+            gsWaitGS();
+            g_MTGSVifCount = 0;
+        }
+    }
+
 	if (cpuRegs.interrupt)
 		_cpuTestInterrupts();
 
@@ -463,12 +444,14 @@ void cpuBranchTest()
 	if( (int)cpuRegs.cycle-(int)g_nextBranchCycle > 0 )
 		g_nextBranchCycle = cpuRegs.cycle+1;
 
-	assert( !g_globalXMMSaved && !g_globalMMXSaved );
+#ifndef PCSX2_NORECBUILD
+	assert( !g_globalXMMSaved X86_32CODE(&& !g_globalMMXSaved) );
 	g_EEFreezeRegs = 1;
+#endif
 }
 
 static void _cpuTestINTC() {
-	if (cpuRegs.CP0.n.Status.val & 0x400 ){
+	if ((cpuRegs.CP0.n.Status.val & 0x10407) == 0x10401){
 		if	(psHu32(INTC_STAT) & psHu32(INTC_MASK)) {
 			if ((cpuRegs.interrupt & (1 << 30)) == 0) {
 				INT(30,4);
@@ -478,7 +461,7 @@ static void _cpuTestINTC() {
 }
 
 static void _cpuTestDMAC() {
-	if (cpuRegs.CP0.n.Status.val & 0x800 ){
+	if ((cpuRegs.CP0.n.Status.val & 0x10807) == 0x10801){
 		if	(psHu16(0xe012) & psHu16(0xe010) || 
 			 psHu16(0xe010) & 0x8000) {
 			if ( (cpuRegs.interrupt & (1 << 31)) == 0) {
@@ -489,22 +472,22 @@ static void _cpuTestDMAC() {
 }
 
 void cpuTestHwInts() {
-	if ((cpuRegs.CP0.n.Status.val & 0x10007) != 0x10001) return;
+	//if ((cpuRegs.CP0.n.Status.val & 0x10007) != 0x10001) return;
 	_cpuTestINTC();
 	_cpuTestDMAC();
 	_cpuTestTIMR();
 }
 
 void cpuTestINTCInts() {
-	if ((cpuRegs.CP0.n.Status.val & 0x10007) == 0x10001) {
+	//if ((cpuRegs.CP0.n.Status.val & 0x10407) == 0x10401) {
 		_cpuTestINTC();
-	}
+	//}
 }
 
 void cpuTestDMACInts() {
-	if ((cpuRegs.CP0.n.Status.val & 0x10007) == 0x10001) {
+	//if ((cpuRegs.CP0.n.Status.val & 0x10807) == 0x10801) {
 		_cpuTestDMAC();
-	}
+	//}
 }
 
 void cpuTestTIMRInts() {
@@ -513,16 +496,17 @@ void cpuTestTIMRInts() {
 	}
 }
 
-extern BOOL bExecBIOS;
 void cpuExecuteBios()
 {
 	// filter CPU options
 	if( CHECK_EEREC ) Config.Options |= PCSX2_COP2REC;
 	else Config.Options &= ~PCSX2_COP2REC;
 
+#ifndef PCSX2_NORECBUILD
 	if( !cpucaps.hasStreamingSIMDExtensions ) {
 		Config.Options &= ~(PCSX2_VU1REC|PCSX2_VU0REC);
 	}
+#endif
 
 	// remove frame skipping if GS doesn't support it
 	switch(CHECK_FRAMELIMIT) {
@@ -562,7 +546,11 @@ void cpuExecuteBios()
 
 void cpuRestartCPU()
 {
+#ifdef PCSX2_NORECBUILD
+	Cpu = &intCpu;
+#else
 	Cpu = CHECK_EEREC ? &recCpu : &intCpu;
+#endif
 
 	// restart vus
 	if (Cpu->Init() == -1) {
@@ -576,3 +564,45 @@ void cpuRestartCPU()
 	psxRestartCPU();
 }
 
+// for interpreter only
+void IntcpuBranchTest()
+{
+#ifndef PCSX2_NORECBUILD
+	g_EEFreezeRegs = 0;
+#endif
+
+	g_nextBranchCycle = cpuRegs.cycle + EE_WAIT_CYCLE;
+
+	if ((int)(cpuRegs.cycle - nextsCounter) >= nextCounter)
+		rcntUpdate();
+
+	if (cpuRegs.interrupt)
+		_cpuTestInterrupts();
+
+	if( (int)(g_nextBranchCycle-nextsCounter) >= nextCounter )
+		g_nextBranchCycle = nextsCounter+nextCounter;
+
+//#ifdef CPU_LOG
+//	cpuTestMissingHwInts();
+//#endif
+	_cpuTestTIMR();
+
+	EEsCycle += cpuRegs.cycle - EEoCycle;
+	EEoCycle = cpuRegs.cycle;
+
+	psxCpu->ExecuteBlock();
+	
+	if (VU0.VI[REG_VPU_STAT].UL & 0x1) {
+		Cpu->ExecuteVU0Block();
+	}
+	if (VU0.VI[REG_VPU_STAT].UL & 0x100) {
+		Cpu->ExecuteVU1Block();
+	}
+
+	if( (int)cpuRegs.cycle-(int)g_nextBranchCycle > 0 )
+		g_nextBranchCycle = cpuRegs.cycle+1;
+
+#ifndef PCSX2_NORECBUILD
+	g_EEFreezeRegs = 1;
+#endif
+}

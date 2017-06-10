@@ -28,6 +28,8 @@
 #include "resource.h"
 #include "Win32.h"
 
+#include "ix86/ix86.h"
+
 BOOL CALLBACK CpuDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	char cpuspeedc[20];
@@ -41,6 +43,23 @@ BOOL CALLBACK CpuDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lParam)
             SetDlgItemText(hW, IDC_FAMILYINPUT, cpuinfo.x86Fam);
 			sprintf(cpuspeedc,"%d MHZ",cpuinfo.cpuspeed);
 			SetDlgItemText(hW, IDC_CPUSPEEDINPUT, cpuspeedc);
+			Static_SetText(GetDlgItem(hW, IDC_VENDORNAME), _("CPU Vendor"));
+			Static_SetText(GetDlgItem(hW, IDC_FAMILYNAME), _("Family"));
+			Static_SetText(GetDlgItem(hW, IDC_CPUSPEEDNAME), _("CPU Speed"));
+			Static_SetText(GetDlgItem(hW, IDC_FEATURESNAME), _("Features"));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_EEREC), _("EERec -  EE/IOP recompiler (need MMX/SSE)"));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_VUGROUP), _("VU Recompilers - All options are set by default"));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_VU0REC), _("VU0rec - enable recompiler for VU0 unit"));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_VU1REC), _("VU1rec - enable recompiler for VU1 unit"));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_GSMULTI), _("Multi threaded GS mode (MTGS)\n(faster on dual core/HT procs, requires pcsx2 restart)"));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_MULTI), _("Dual Core Mode (DC) - Much faster but only valid with MTGS"));
+			Static_SetText(GetDlgItem(hW, IDC_FRAMELIMIT), _("Frame Limiting"));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_FL_NORMAL), _("Normal - All frames are rendered as fast as possible."));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_FL_LIMIT), _("Limit - Force frames to normal speeds if too fast."));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_FL_SKIP), _("Frame Skip - In order to achieve normal speeds,\nsome frames are skipped (fast).\nFps displayed counts skipped frames too."));
+			Static_SetText(GetDlgItem(hW, IDC_CPU_FL_SKIPVU), _("VU Skip - Same as 'Frame Skip', but tries to skip more.\nArtifacts might be present, but will be faster."));
+			Button_SetText(GetDlgItem(hW, IDOK), _("OK"));
+			Button_SetText(GetDlgItem(hW, IDCANCEL), _("Cancel"));
 			//features[0]=':';
 			//strcat(features,"");
 			strcpy(features,"");
@@ -99,12 +118,12 @@ BOOL CALLBACK CpuDlgProc(HWND hW, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 					if( SendDlgItemMessage(hW,IDC_CPU_EEREC,BM_GETCHECK,0,0) ) newopts |= PCSX2_EEREC;
 
-//#ifdef PCSX2_DEVBUILD
+#ifdef PCSX2_DEVBUILD
 					if( SendDlgItemMessage(hW,IDC_CPU_VU0REC,BM_GETCHECK,0,0) ) newopts |= PCSX2_VU0REC;
 					if( SendDlgItemMessage(hW,IDC_CPU_VU1REC,BM_GETCHECK,0,0) ) newopts |= PCSX2_VU1REC;
-//#else
-//					newopts |= PCSX2_VU0REC|PCSX2_VU1REC;
-//#endif
+#else
+					newopts |= PCSX2_VU0REC|PCSX2_VU1REC;
+#endif
 
 					if( SendDlgItemMessage(hW,IDC_CPU_GSMULTI,BM_GETCHECK,0,0) ) newopts |= PCSX2_GSMULTITHREAD;
 					if( SendDlgItemMessage(hW,IDC_CPU_MULTI,BM_GETCHECK,0,0) ) newopts |= PCSX2_DUALCORE;

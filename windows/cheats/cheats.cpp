@@ -5,9 +5,10 @@
 
 #include <vector>
 
+#include "PS2Etypes.h"
+
 extern "C" {
 #include "windows/resource.h"
-#include "PS2Etypes.h"
 #include "PS2Edefs.h"
 #include "Memory.h"
 
@@ -55,7 +56,7 @@ char tn[100];
 char to[100];
 char tv[100];
 
-#ifdef WIN32_VIRTUAL_MEM
+#ifdef PCSX2_VIRTUAL_MEM
 u8 *mptr[2]={PS2MEM_BASE,PS2MEM_PSX};
 #else
 char *mptr[2];
@@ -426,7 +427,7 @@ BOOL CALLBACK FinderProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			return FALSE;
 		case WM_INITDIALOG:
 
-#ifndef WIN32_VIRTUAL_MEM
+#ifndef PCSX2_VIRTUAL_MEM
 			mptr[0]=(char*)psM;
 			mptr[1]=psxM;
 #endif

@@ -97,7 +97,6 @@
 #define IDC_MEMORY_CLOSE                1036
 #define IDC_VU0_VF31                    1036
 #define IDC_CP024                       1037
-#define IDC_DEBUG_BREAK                 1037
 #define IDC_MEMORY_ADDR                 1037
 #define IDC_DEBUG_LOG                   1037
 #define IDC_CP025                       1038
@@ -539,6 +538,11 @@
 #define IDC_MONTHCALENDAR1              1270
 #define IDC_GROUPS                      1272
 #define IDC_PATCHES                     1273
+#define IDC_DEBUG_STEP_EE               1274
+#define IDC_DEBUG_STEP_OVER             1275
+#define IDC_DEBUG_RUN_TO_CURSOR         1276
+#define IDC_DEBUG_STEP_TO_CURSOR        1277
+#define IDC_DEBUG_BREAK                 1278
 #define IDC_LOG                         1500
 #define IDC_CPULOG                      1500
 #define IDC_MEMLOG                      1501
@@ -586,6 +590,8 @@
 #define IDC_ADD                         1714
 #define IDC_LRESULTS                    1715
 #define IDC_STATUS                      1716
+#define IDC_FW                          1716
+#define IDC_FRAMELIMIT                  1716
 #define IDC_UNSIGNED                    1717
 #define IDC_8B                          1718
 #define IDC_16B                         1719
@@ -669,7 +675,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         40018
-#define _APS_NEXT_CONTROL_VALUE         1274
+#define _APS_NEXT_CONTROL_VALUE         1275
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

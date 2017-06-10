@@ -40,6 +40,7 @@ typedef struct {
 extern R5900cpu *Cpu;
 extern R5900cpu intCpu;
 extern R5900cpu recCpu;
+extern u32 bExecBIOS;
 
 typedef union {   // Declare union type GPR register
 	u64 UD[2];      //128 bits
@@ -112,7 +113,7 @@ typedef struct {
 	CP0regs CP0;		// is COP0 32bit?
 	u32 sa;				// shift amount (32bit), needs to be 16 byte aligned
 	u32 constzero;		// always 0, for MFSA
-    u32 pc;				// Program counter
+    u32 pc;				// Program counter, when changing offset in struct, check iR5900-X.S to make sure offset is correct
     u32 code;			// The instruction
     PERFregs PERF;
 	u32 eCycle[32];
@@ -126,7 +127,7 @@ typedef struct {
 
 extern int EEsCycle;
 extern u32 EEoCycle, IOPoCycle;
-extern cpuRegisters cpuRegs;
+extern PCSX2_ALIGNED16_DECL(cpuRegisters cpuRegs);
 
 // used for optimization
 typedef union {
@@ -153,7 +154,7 @@ typedef union {
 	if( (reg) < 32 ) g_cpuHasConstReg &= ~(1<<(reg)); \
 }
 
-extern GPR_reg64 g_cpuConstRegs[32];
+extern PCSX2_ALIGNED16_DECL(GPR_reg64 g_cpuConstRegs[32]);
 extern u32 g_cpuHasConstReg, g_cpuFlushedConstReg;
 
 typedef union {
@@ -167,7 +168,7 @@ typedef struct {
 	FPRreg ACC;			// 32 bit accumulator 
 } fpuRegisters;
 
-extern fpuRegisters fpuRegs;
+extern PCSX2_ALIGNED16_DECL(fpuRegisters fpuRegs);
 
 
 typedef struct {
@@ -181,7 +182,7 @@ typedef struct {
 	u32 PFN1;
 } tlbs;
 
-extern tlbs tlb[48];
+extern PCSX2_ALIGNED16_DECL(tlbs tlb[48]);
 
 #ifndef _PC_
 
@@ -249,12 +250,7 @@ void intExecuteVU1Block();
 void JumpCheckSym(u32 addr, u32 pc);
 void JumpCheckSymRet(u32 addr);
 
-// check to see if needs freezing
-void FreezeMMXRegs_(int save);
-void FreezeXMMRegs_(int save);
 extern u32 g_EEFreezeRegs;
-#define FreezeMMXRegs(save) if( g_EEFreezeRegs ) { FreezeMMXRegs_(save); }
-#define FreezeXMMRegs(save) if( g_EEFreezeRegs ) { FreezeXMMRegs_(save); }
 
 //exception code
 #define EXC_CODE(x)     ((x)<<2)

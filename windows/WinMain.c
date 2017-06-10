@@ -18,8 +18,8 @@
 
 #define WINVER 0x0500
 
-#if _WIN32_WINNT < 0x0500
-#define _WIN32_WINNT 0x0500
+#if _WIN32_WINNT < 0x0501
+#define _WIN32_WINNT 0x0501
 #endif
 
 #include <windows.h>
@@ -29,6 +29,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#include <ntsecapi.h>
 
 #include <assert.h>
 
@@ -51,7 +53,6 @@
 
 static int efile;
 char filename[256];
-extern char strgametitle[256];
 extern int g_SaveGSStream;
 
 static int AccBreak = 0;
@@ -62,9 +63,10 @@ typedef struct {
 } _langs;
 _langs *langs = NULL;
 
+int UseGui = 1;
 int nDisableSC = 0; // screensaver
 int firstRun=1;
-
+int RunExe = 0;
 void OpenConsole() {
 	COORD csize;
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo; 
@@ -98,6 +100,7 @@ void strcatz(char *dst, char *src) {
 BOOL APIENTRY CmdlineProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);//forward def
 //-------------------
 
+extern int g_ZeroGSOptions;
 void RunExecute(int run) {
 	SetThreadPriority(GetCurrentThread(), Config.ThPriority);
 	SetPriorityClass(GetCurrentProcess(), Config.ThPriority == THREAD_PRIORITY_HIGHEST ? ABOVE_NORMAL_PRIORITY_CLASS : NORMAL_PRIORITY_CLASS);
@@ -107,28 +110,32 @@ void RunExecute(int run) {
 		SysReset();
 	}
 
-	AccBreak = 1;
+    if( UseGui )
+        AccBreak = 1;
+
 	DestroyWindow(gApp.hWnd);
 	gApp.hWnd = NULL;
 
-	if (OpenPlugins() == -1) {
+	if (OpenPlugins(g_TestRun.ptitle) == -1) {
 		CreateMainWindow(SW_SHOWNORMAL);
 		return;
 	}
 
 	if (needReset == 1) {
-		cpuExecuteBios();
-		if (efile == 2)
-			efile=GetPS2ElfName(filename);
-		if (efile)
-			loadElfFile(filename);
+		if(RunExe == 0)cpuExecuteBios();
+		//if (efile == 2)
+		if(!efile)efile=GetPS2ElfName(filename);
+		//if (efile)
+		loadElfFile(filename);
+		
+		RunExe = 0;
 		efile=0;
 		needReset = 0;
 	}
 
 	// this needs to be called for every new game! (note: sometimes launching games through bios will give a crc of 0)
 	if( GSsetGameCRC != NULL )
-		GSsetGameCRC(ElfCRC);	
+		GSsetGameCRC(ElfCRC, g_ZeroGSOptions);
 
 	if (run) Cpu->Execute();
 }
@@ -160,7 +167,7 @@ void States_Load(int num) {
 	char Text[256];
 	int ret;
 
-	efile = 2;
+	efile = 0;
 	RunExecute(0);
 
 	sprintf (Text, "sstates\\%8.8X.%3.3d", ElfCRC, num);
@@ -282,8 +289,6 @@ void OnStates_SaveOther() {
 	}
 }
 
-#ifdef PCSX2_DEVBUILD
-
 TESTRUNARGS g_TestRun;
 
 static int ParseCommandLine(char* pcmd)
@@ -291,34 +296,47 @@ static int ParseCommandLine(char* pcmd)
 	const char* pdelim = " \t\r\n";
 	char* token = strtok(pcmd, pdelim);
 
-	g_TestRun.efile = 1;
+	g_TestRun.efile = 0;
 
 	while(token != NULL) {
 
 		if( stricmp(token, "-help") == 0) {
-			MessageBox(NULL, "pcsx2 [-option value]\n"
-				"\tPcsx2 Team 2003-2006\n\n"
-				"-help {display this help file}\n"
-				"-title [name] {run this image/iso/elf}\n"
-				"-image [name] {path and base name of image (do not include the .ext)}\n"
-				"-log [name] {log path to save log file in}\n"
-				"-logopt [hex] {log options in hex (see debug.h) }\n"
-				"-pad [tsxcal] {specify to hold down on the triangle, square, circle, x, start, select buttons}\n"
-				"-frame [frame] {game will run up to this frame before exiting}\n"
-				"-numimages [num] {after hitting frame, this many images will be captures every 20 frames}\n"
-				"-jpg {save images to jpg format}\n"
-				"-efile [efile] {0 - reset, 1 - runcd (default), 2 - loadelf}\n"
-				"-gs [dllpath] {specify the dll load path of the GS plugin}\n"
-				"-cdvd [dllpath] {specify the dll load path of the CDVD plugin}\n"
-				"-spu [dllpath] {specify the dll load path of the SPU2 plugin}\n",
-				"Help", MB_OK);
+            const char* phelpmsg = 
+                "pcsx2 [options] [file]\n\n"
+                "-cfg [file] {configuration file}\n"
+                "-efile [efile] {0 - reset, 1 - runcd (default), 2 - loadelf}\n"
+                "-help {display this help file}\n"
+                "-nogui {Don't use gui when launching}\n"
+                "-loadgs [file} {Loads a gsstate}\n"
+                "\n"
+#ifdef PCSX2_DEVBUILD
+                "Testing Options: \n"
+                "\t-frame [frame] {game will run up to this frame before exiting}\n"
+				"\t-image [name] {path and base name of image (do not include the .ext)}\n"
+                "\t-jpg {save images to jpg format}\n"
+				"\t-log [name] {log path to save log file in}\n"
+				"\t-logopt [hex] {log options in hex (see debug.h) }\n"
+				"\t-numimages [num] {after hitting frame, this many images will be captures every 20 frames}\n"
+                "\t-test {Triggers testing mode (only for dev builds)}\n"
+                "\n"
+#endif
+
+                "Load Plugins:\n"
+                "\t-cdvd [dllpath] {specify the dll load path of the CDVD plugin}\n"
+                "\t-gs [dllpath] {specify the dll load path of the GS plugin}\n"
+                "-pad [tsxcal] {specify to hold down on the triangle, square, circle, x, start, select buttons}\n"
+                "\t-spu [dllpath] {specify the dll load path of the SPU2 plugin}\n"
+                "\n";
+
+            printf("%s", phelpmsg);
+			MessageBox(NULL,phelpmsg,"Help", MB_OK);
 			return -1;
 		}
-		else if( stricmp(token, "-title") == 0 ) {
-			token = strtok(NULL, pdelim);
-			g_TestRun.ptitle = token;
+        else if( stricmp(token, "-nogui") == 0 ) {
+			UseGui = 0;
 		}
-		else if( stricmp(token, "-image") == 0 ) {
+#ifdef PCSX2_DEVBUILD
+        else if( stricmp(token, "-image") == 0 ) {
 			token = strtok(NULL, pdelim);
 			g_TestRun.pimagename = token;
 		}
@@ -333,11 +351,7 @@ static int ParseCommandLine(char* pcmd)
 				sscanf(token, "%x", &varLog);
 			}
 		}
-		else if( stricmp(token, "-pad") == 0 ) {
-			token = strtok(NULL, pdelim);
-			printf("-pad ignored\n");
-		}
-		else if( stricmp(token, "-frame") == 0 ) {
+        else if( stricmp(token, "-frame") == 0 ) {
 			token = strtok(NULL, pdelim);
 			if( token != NULL ) {
 				g_TestRun.frame = atoi(token);
@@ -349,14 +363,19 @@ static int ParseCommandLine(char* pcmd)
 				g_TestRun.numimages = atoi(token);
 			}
 		}
+        else if( stricmp(token, "-jpg") == 0 ) {
+			g_TestRun.jpgcapture = 1;
+		}
+#endif
+		else if( stricmp(token, "-pad") == 0 ) {
+			token = strtok(NULL, pdelim);
+			printf("-pad ignored\n");
+		}
 		else if( stricmp(token, "-efile") == 0 ) {
 			token = strtok(NULL, pdelim);
 			if( token != NULL ) {
 				g_TestRun.efile = atoi(token);
 			}
-		}
-		else if( stricmp(token, "-jpg") == 0 ) {
-			g_TestRun.jpgcapture = 1;
 		}
 		else if( stricmp(token, "-gs") == 0 ) {
 			token = strtok(NULL, pdelim);
@@ -375,8 +394,8 @@ static int ParseCommandLine(char* pcmd)
 			g_pRunGSState = token;
 		}
 		else {
-			printf("invalid args\n");
-			return -1;
+            g_TestRun.ptitle = token;
+            printf("opening file %s\n", token);
 		}
 
 		if( token == NULL ) {
@@ -387,20 +406,18 @@ static int ParseCommandLine(char* pcmd)
 		token = strtok(NULL, pdelim);
 	}
 
-	if( g_TestRun.ptitle != NULL )
-		g_TestRun.enabled = 1;
-
 	return 0;
 }
 
-#endif
 extern void LoadPatch(char *crc);
+
+BOOL SysLoggedSetLockPagesPrivilege ( HANDLE hProcess, BOOL bEnable);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	char *lang;
 	int i;
 	
-#ifdef WIN32_VIRTUAL_MEM
+#ifdef PCSX2_VIRTUAL_MEM
 	LPVOID lpMemReserved;
 #endif
 
@@ -408,18 +425,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	pInstance=hInstance;
 	FirstShow=true;
 
-#ifdef WIN32_VIRTUAL_MEM
+#ifdef PCSX2_VIRTUAL_MEM
 
 	if( !SysLoggedSetLockPagesPrivilege( GetCurrentProcess(), TRUE ) )
-		return 0;
+		return -1;
+
+	
 
 	lpMemReserved = VirtualAlloc(PS2MEM_BASE, 0x40000000, MEM_RESERVE, PAGE_NOACCESS);
 
 	if( lpMemReserved == NULL || lpMemReserved!= PS2MEM_BASE ) {
 		char str[255];
-		sprintf(str, "Cannot allocate mem addresses 0x20000000-0x40000000, err: %d", GetLastError());
+		sprintf(str, "Cannot allocate mem addresses %x-%x, err: %d", PS2MEM_BASE, PS2MEM_BASE+0x40000000, GetLastError());
 		MessageBox(NULL, str, "SysError", MB_OK);
-		return 0;
+		return -1;
 	}
 #endif
 
@@ -439,6 +458,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		strcpy(Config.BiosDir,    "Bios\\");
 		strcpy(Config.PluginsDir, "Plugins\\");
 		Config.Patch = 1;
+        Config.Options = PCSX2_EEREC|PCSX2_VU0REC|PCSX2_VU1REC|PCSX2_COP2REC;
 
 		SysMessage(_("Pcsx2 needs to be configured"));
 		Pcsx2Configure(NULL);
@@ -462,7 +482,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (Config.PsxOut) OpenConsole();
 
-#ifdef PCSX2_DEVBUILD
 	memset(&g_TestRun, 0, sizeof(g_TestRun));
 
 	if( lpCmdLine == NULL || *lpCmdLine == 0 )
@@ -477,13 +496,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		_snprintf(Config.CDVD, sizeof(Config.CDVD), "%s", g_TestRun.pcdvddll);
 	if( g_TestRun.pspudll )
 		_snprintf(Config.SPU2, sizeof(Config.SPU2), "%s", g_TestRun.pspudll);
-#endif
 
 	if (SysInit() == -1) return 1;
 
 #ifdef PCSX2_DEVBUILD
-	if( g_TestRun.enabled ) {
+    if( g_TestRun.enabled || g_TestRun.ptitle != NULL ) {
 		// run without ui
+        UseGui = 0;
 		_snprintf(filename, sizeof(filename), "%s", g_TestRun.ptitle);
 		needReset = 1;
 		efile = g_TestRun.efile;
@@ -503,22 +522,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	CreateMainWindow(nCmdShow);
 
-	// output the help commands
-	SysPrintf("\tF1 - save state\n");
-	SysPrintf("\t(Shift +) F2 - cycle states\n");
-	SysPrintf("\tF3 - load state\n");
+    if( Config.PsxOut ) {
+	    // output the help commands
+	    SysPrintf("\tF1 - save state\n");
+	    SysPrintf("\t(Shift +) F2 - cycle states\n");
+	    SysPrintf("\tF3 - load state\n");
 
 #ifdef PCSX2_DEVBUILD
-	SysPrintf("\tF10 - dump performance counters\n");
-	SysPrintf("\tF11 - save GS state\n");
-	SysPrintf("\tF12 - dump hardware registers\n");
+	    SysPrintf("\tF10 - dump performance counters\n");
+	    SysPrintf("\tF11 - save GS state\n");
+	    SysPrintf("\tF12 - dump hardware registers\n");
 #endif
+    }
 
 	LoadPatch("default");
 
+//    needReset = 1;
+//	efile = 0;
+//	RunExecute(1);
+
 	RunGui();
 
-#ifdef WIN32_VIRTUAL_MEM
+#ifdef PCSX2_VIRTUAL_MEM
 	VirtualFree(PS2MEM_BASE, 0, MEM_RELEASE);
 #endif
 
@@ -538,119 +563,39 @@ void RunGui() {
 	}
 }
 
-#define NUM_STATES 10
-int StatesC = 0;
-extern void iDumpRegisters(u32 startpc, u32 temp);
-extern void recExecuteVU1Block(void);
-extern void DummyExecuteVU1Block(void);
-
-void CALLBACK KeyEvent(keyEvent* ev) {
-	char Text[256];
-	int ret;
+static int shiftkey = 0;
+void CALLBACK KeyEvent(keyEvent* ev)
+{
+	
 	if (ev == NULL) return;
 	if (ev->event == KEYRELEASE) {
+		switch (ev->key) {
+		case VK_SHIFT: shiftkey = 0; break;
+		}
 		GSkeyEvent(ev); return;
 	}
-	if (ev->event != KEYPRESS) return;
+	if (ev->event != KEYPRESS)
+        return;
+
+    //some pad plugins don't give a key released event for shift, so this is needed
+    //shiftkey = GetKeyState(VK_SHIFT)&0x8000;
+    //Well SSXPad breaks with your code, thats why my code worked and your makes reg dumping impossible
+	//So i suggest you fix the plugins that dont.
+    
 	switch (ev->key) {
-		case VK_F1:
-			sprintf(Text, "sstates/%8.8X.%3.3d", ElfCRC, StatesC);
-			ret = SaveState(Text);
-			break;
-		case VK_F2:
-			if( (GetKeyState(VK_SHIFT)&0x8000) )
-				StatesC = (StatesC+NUM_STATES-1)%NUM_STATES;
-			else
-				StatesC = (StatesC+1)%NUM_STATES;
-			SysPrintf("*PCSX2*: Selected State %ld\n", StatesC);
-			if( GSchangeSaveState != NULL ) {
-				sprintf(Text, "sstates/%8.8X.%3.3d", ElfCRC, StatesC);
-				GSchangeSaveState(StatesC, Text);
-			}
-			break;
-		case VK_F3:			
-			sprintf (Text, "sstates/%8.8X.%3.3d", ElfCRC, StatesC);
-			ret = LoadState(Text);
-			break;	
-
-		case VK_F4:
-			// cycle
-			Config.Options = (Config.Options&~PCSX2_FRAMELIMIT_MASK)|(((Config.Options&PCSX2_FRAMELIMIT_MASK)+PCSX2_FRAMELIMIT_LIMIT)&PCSX2_FRAMELIMIT_MASK);
-			switch(CHECK_FRAMELIMIT) {
-				case PCSX2_FRAMELIMIT_NORMAL:
-					if( GSsetFrameSkip != NULL ) GSsetFrameSkip(0);
-					Cpu->ExecuteVU1Block = recExecuteVU1Block;
-					SysPrintf("Normal - Frame Limit Mode Changed\n");
-					break;
-				case PCSX2_FRAMELIMIT_LIMIT:
-					if( GSsetFrameSkip != NULL ) GSsetFrameSkip(0);
-					Cpu->ExecuteVU1Block = recExecuteVU1Block;
-					SysPrintf("Limit - Frame Limit Mode Changed\n");
-					break;
-				case PCSX2_FRAMELIMIT_SKIP:
-					Cpu->ExecuteVU1Block = recExecuteVU1Block;
-					SysPrintf("Frame Skip - Frame Limit Mode Changed\n");
-					break;
-				case PCSX2_FRAMELIMIT_VUSKIP:
-					SysPrintf("VU Skip - Frame Limit Mode Changed\n");
-					break;
-			}
-			SaveConfig();
-			break;
-		// note: VK_F5-VK_F7 are reserved for GS
-		case VK_F8:
-			GSmakeSnapshot("snap\\");
-			break;
-
-#ifdef PCSX2_DEVBUILD
-		case VK_F10:
-		{
-			int num;
-			FILE* f;
-			BASEBLOCKEX** ppblocks = GetAllBaseBlocks(&num, 0);
-
-			f = fopen("perflog.txt", "w");
-			while(num-- > 0 ) {
-				if( ppblocks[0]->visited > 0 ) {
-					fprintf(f, "%u %u %u %u\n", ppblocks[0]->startpc, (u32)(ppblocks[0]->ltime.QuadPart / ppblocks[0]->visited), ppblocks[0]->visited, ppblocks[0]->size);
-				}
-				ppblocks[0]->visited = 0;
-				ppblocks[0]->ltime.QuadPart = 0;
-				ppblocks++;
-			}
-			fclose(f);
-			SysPrintf("perflog.txt written\n");
-			break;
-		}
-		
-		case VK_F11:
-			if( CHECK_MULTIGS ) {
-				SysPrintf("Cannot make gsstates in MTGS mode\n");
-			}
-			else {
-				if( strgametitle[0] != 0 ) {
-					// only take the first two words
-					char name[255], temptitle[255], *tok;
-					_snprintf(temptitle, 255, "%s", strgametitle);
-					tok = strtok(strgametitle, " ");
-					sprintf(name, "%s_", strlwr(tok));
-					tok = strtok(NULL, " ");
-					if( tok != NULL ) strcat(name, tok);
-
-					sprintf(Text, "sstates/gs_%s.%3.3d", name, StatesC);
-				}
-				else
-					sprintf(Text, "sstates/gs%8.8X.%3.3d", ElfCRC, StatesC);
-
-				SaveGSState(Text);
-			}
-			break;
-
-		case VK_F12:
-			iDumpRegisters(cpuRegs.pc, 0);
-			SysPrintf("hardware registers dumped EE:%x, IOP:%x\n", cpuRegs.pc, psxRegs.pc);
-			break;
-#endif
+		case VK_SHIFT: shiftkey = 1; break;
+		case VK_F1: ProcessFKeys(1, shiftkey); break;
+		case VK_F2: ProcessFKeys(2, shiftkey); break;
+        case VK_F3: ProcessFKeys(3, shiftkey); break;
+        case VK_F4: ProcessFKeys(4, shiftkey); break;
+        case VK_F5: ProcessFKeys(5, shiftkey); break;
+        case VK_F6: ProcessFKeys(6, shiftkey); break;
+        case VK_F7: ProcessFKeys(7, shiftkey); break;
+        case VK_F8: ProcessFKeys(8, shiftkey); break;
+        case VK_F9: ProcessFKeys(9, shiftkey); break;
+        case VK_F10: ProcessFKeys(10, shiftkey); break;
+        case VK_F11: ProcessFKeys(11, shiftkey); break;
+        case VK_F12: ProcessFKeys(12, shiftkey); break;
 
 		case VK_ESCAPE:
 #ifdef PCSX2_DEVBUILD
@@ -662,6 +607,12 @@ void CALLBACK KeyEvent(keyEvent* ev) {
 #endif
 
 			ClosePlugins();
+
+            if( !UseGui ) {
+                // not using GUI and user just quit, so exit
+                exit(0);
+            }
+
 			CreateMainWindow(SW_SHOWNORMAL);
 			RunGui();
             nDisableSC = 0;
@@ -800,12 +751,14 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 				return TRUE;
 
 			case ID_RUN_EXECUTE:
+				if(needReset == 1) RunExe = 1;
+				efile = 0;
 				RunExecute(1);
 				return TRUE;
 
 			case ID_FILE_RUNCD:
 				needReset = 1;
-				efile = 2;
+				efile = 0;
 				RunExecute(1);
                 
 				return TRUE;
@@ -1008,7 +961,7 @@ LRESULT WINAPI MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             else
                 return DefWindowProc(hWnd, msg, wParam, lParam);
             break;
-
+        
 		case WM_QUIT:
 			if (Config.PsxOut) CloseConsole();
 			exit(0);
@@ -1136,11 +1089,11 @@ void CreateMainMenu() {
 #endif
 
 	ADDSUBMENU(0, _("&Misc"));
-	ADDMENUITEM(0,("Enable &Patches"), ID_PATCHES);
-	ADDMENUITEM(0,("Enable &Console"), ID_CONSOLE); 
+	ADDMENUITEM(0,_("Enable &Patches"), ID_PATCHES);
+	ADDMENUITEM(0,_("Enable &Console"), ID_CONSOLE); 
 	ADDSEPARATOR(0);
-	ADDMENUITEM(0,("Patch &Finder..."), ID_CHEAT_FINDER_SHOW); 
-	ADDMENUITEM(0,("Patch &Browser..."), ID_CHEAT_BROWSER_SHOW); 
+	ADDMENUITEM(0,_("Patch &Finder..."), ID_CHEAT_FINDER_SHOW); 
+	ADDMENUITEM(0,_("Patch &Browser..."), ID_CHEAT_BROWSER_SHOW); 
 
 
     ADDSUBMENU(0, _("&Help"));
@@ -1184,7 +1137,7 @@ void CreateMainWindow(int nCmdShow) {
 	GetObject(hbitmap_background, sizeof(bm), &bm);
 
 	{
-#ifdef WIN32_VIRTUAL_MEM
+#ifdef PCSX2_VIRTUAL_MEM
 		const char* pvm = "VM";
 #else
 		const char* pvm = "non VM";
@@ -1416,12 +1369,21 @@ void SysPrintf(char *fmt, ...) {
 	int len, s;
 	int i, j;
 
-	if (Config.PsxOut == 0) return;
-
 	va_start(list,fmt);
 	_vsnprintf(msg,511,fmt,list);
 	msg[511] = '\0';
 	va_end(list);
+
+    if (Config.PsxOut == 0) {
+#ifdef EMU_LOG
+#ifndef LOG_STDOUT
+        if (emuLog != NULL && !(varLog & 0x80000000)) {
+            fprintf(emuLog, "%s", msg);
+        }
+#endif
+#endif
+        return;
+    }
 
 	ptr = msg; len = strlen(msg);
 	for (i=0, j=0; i<len; i++, j++) {
@@ -1469,7 +1431,8 @@ void SysMessage(char *fmt, ...) {
 }
 
 void SysUpdate() {
-	KeyEvent(PAD1keyEvent());
+
+    KeyEvent(PAD1keyEvent());
 	KeyEvent(PAD2keyEvent());
 }
 
@@ -1513,7 +1476,7 @@ void SysMunmap(uptr base, u32 size) {
 	VirtualFree((void*)base, 0, MEM_RELEASE);
 }
 
-#ifdef WIN32_VIRTUAL_MEM
+#ifdef PCSX2_VIRTUAL_MEM
 
 // virtual memory/privileges
 #include "ntsecapi.h"
@@ -1849,8 +1812,7 @@ int SysPhysicalAlloc(u32 size, PSMEMORYBLOCK* pblock)
 
 		if( s_dwPageSize != 0x1000 ) {
 			SysMessage("Error! OS page size must be 4Kb!\n"
-				"If for some reason the OS cannot have 4Kb pages, then will need\n"
-				"to add a special translation LUT in pcsx2 (which will slow things down a LOT!)");
+				"If for some reason the OS cannot have 4Kb pages, then run the TLB build.");
 			return -1;
 		}
 	}
@@ -1906,7 +1868,7 @@ void SysPhysicalFree(PSMEMORYBLOCK* pblock)
 int SysVirtualPhyAlloc(void* base, u32 size, PSMEMORYBLOCK* pblock)
 {
 	BOOL bResult;
-	ULONG_PTR i;
+	int i;
 
 	LPVOID lpMemReserved = VirtualAlloc( base, size, MEM_RESERVE | MEM_PHYSICAL, PAGE_READWRITE );
 	if( lpMemReserved == NULL || base != lpMemReserved )
@@ -1947,22 +1909,9 @@ void SysVirtualFree(void* lpMemReserved, u32 size)
 	VirtualFree( lpMemReserved, 0, MEM_RELEASE );
 }
 
-void SysVirtualProtectAlloc(void* base, u32 size, PSMEMORYBLOCK* pblock)
+int SysMapUserPhysicalPages(void* Addr, uptr NumPages, uptr* pfn, int pageoffset)
 {
-	// Reserve the virtual memory.
-	VirtualProtect( base, size, PAGE_READWRITE, NULL );
-	MapUserPhysicalPages( base, pblock->NumberPages, pblock->aPFNs );
-}
-
-void SysVirtualProtectFree(void* lpMemReserved, u32 size)
-{
-	VirtualProtect(lpMemReserved, 0x1000, PAGE_NOACCESS, NULL);
-	MapUserPhysicalPages( lpMemReserved, size/s_dwPageSize, NULL );
-}
-
-BOOL SysMapUserPhysicalPages(PVOID Addr, ULONG_PTR NumPages, PULONG_PTR PageArray)
-{
-	BOOL bResult = MapUserPhysicalPages(Addr, NumPages, PageArray);
+	BOOL bResult = MapUserPhysicalPages(Addr, NumPages, pfn+pageoffset);
 
 #ifdef _DEBUG
 	//if( !bResult )

@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Rumano resources
+// Romanian resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ROM)
 #ifdef _WIN32
@@ -59,12 +59,12 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Rumano resources
+#endif    // Romanian resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Inglés (Estados Unidos) resources
+// English (U.S.) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
@@ -137,33 +137,36 @@ BEGIN
     EDITTEXT        IDC_CP031,191,218,51,12,ES_READONLY
 END
 
-IDD_DEBUG DIALOGEX 0, 0, 281, 297
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_MINIMIZEBOX | WS_POPUP | 
-    WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_DEBUG DIALOGEX 0, 0, 341, 270
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Debugger"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    LISTBOX         IDC_DEBUG_DISASM,7,28,198,235,LBS_USETABSTOPS | 
-                    LBS_NOINTEGRALHEIGHT | WS_TABSTOP,WS_EX_TRANSPARENT
-    PUSHBUTTON      "Close",IDC_DEBUG_CLOSE,223,249,50,14
-    PUSHBUTTON      "Step",IDC_DEBUG_STEP,223,36,50,14
-    PUSHBUTTON      "Skip",IDC_DEBUG_SKIP,223,54,50,14
-    PUSHBUTTON      "Go",IDC_DEBUG_GO,223,19,50,14
-    PUSHBUTTON      "Bkpt on Exec",IDC_DEBUG_BP_EXEC,223,129,50,14
-    SCROLLBAR       IDC_DEBUG_SCROLL,205,28,11,235,SBS_VERT
-    PUSHBUTTON      "Jump to ADDR",IDC_DEBUG_JUMP,223,112,50,14
-    PUSHBUTTON      "Un/Set Log",IDC_DEBUG_LOG,223,71,50,14
-    PUSHBUTTON      "Bkpt on Count",IDC_DEBUG_BP_COUNT,223,145,50,14
-    PUSHBUTTON      "Dump code",IDC_DEBUG_DUMP,223,194,50,14
-    PUSHBUTTON      "Clear Bkpts",IDC_DEBUG_BP_CLEAR,223,162,50,14
-    PUSHBUTTON      "Dump memory",IDC_DEBUG_MEMORY,223,211,50,14
-    PUSHBUTTON      "Cpu ops",IDC_CPUOP,223,227,50,14
-    PUSHBUTTON      "Reset to PC",IDC_DEBUG_RESETTOPC,223,96,50,14
+    LISTBOX         IDC_DEBUG_DISASM,7,6,198,257,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_TABSTOP,WS_EX_TRANSPARENT
+    SCROLLBAR       IDC_DEBUG_SCROLL,205,6,11,257,SBS_VERT
+    PUSHBUTTON      "Go",IDC_DEBUG_GO,224,6,50,14
+    PUSHBUTTON      "S&tep (IOP)",IDC_DEBUG_STEP,224,183,50,14
+    GROUPBOX        "R5900",IDC_STATIC,221,39,114,63
+    PUSHBUTTON      "&Step Into",IDC_DEBUG_STEP_EE,224,50,50,14
+    PUSHBUTTON      "S&kip",IDC_DEBUG_SKIP,224,67,50,14
+    PUSHBUTTON      "Step to Cursor",IDC_DEBUG_STEP_TO_CURSOR,224,84,51,14
+    PUSHBUTTON      "Run &Over",IDC_DEBUG_STEP_OVER,277,50,52,14
+    PUSHBUTTON      "&Run to Cursor",IDC_DEBUG_RUN_TO_CURSOR,278,67,51,14
+    PUSHBUTTON      "Break",IDC_DEBUG_BREAK,278,84,51,14
+    PUSHBUTTON      "Bkpt on Exec",IDC_DEBUG_BP_EXEC,224,125,50,14
+    PUSHBUTTON      "Bkpt on Count",IDC_DEBUG_BP_COUNT,224,141,50,14
+    PUSHBUTTON      "Clear Bkpts",IDC_DEBUG_BP_CLEAR,224,158,50,14
+    PUSHBUTTON      "Un/Set Log",IDC_DEBUG_LOG,279,124,50,14
+    PUSHBUTTON      "Reset to PC",IDC_DEBUG_RESETTOPC,279,142,50,14
+    PUSHBUTTON      "Jump to ADDR",IDC_DEBUG_JUMP,279,158,50,14
+    PUSHBUTTON      "Dump code",IDC_DEBUG_DUMP,223,211,50,14
+    PUSHBUTTON      "Dump memory",IDC_DEBUG_MEMORY,223,228,50,14
+    PUSHBUTTON      "Cpu ops",IDC_CPUOP,223,244,50,14
+    PUSHBUTTON      "Close",IDC_DEBUG_CLOSE,280,244,50,14
 END
 
 IDD_DUMP DIALOGEX 0, 0, 386, 96
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | 
-    WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Dump code"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
@@ -263,8 +266,7 @@ BEGIN
 END
 
 IDD_JUMP DIALOG  0, 0, 175, 64
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | 
-    WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Jump to specific address"
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -275,16 +277,14 @@ BEGIN
 END
 
 IDD_MEMORY DIALOG  0, 0, 317, 270
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_MINIMIZEBOX | WS_POPUP | 
-    WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Memory"
 FONT 8, "Courier"
 BEGIN
     EDITTEXT        IDC_MEMORY_ADDR,54,7,97,12
     PUSHBUTTON      "Close",IDC_MEMORY_CLOSE,266,7,42,14
     LTEXT           "Address:",IDC_STATIC,14,8,34,8
-    LISTBOX         IDC_MEMORY_DUMP,3,29,300,169,LBS_USETABSTOPS | 
-                    LBS_NOINTEGRALHEIGHT | LBS_NOSEL | WS_TABSTOP
+    LISTBOX         IDC_MEMORY_DUMP,3,29,300,169,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | LBS_NOSEL | WS_TABSTOP
     SCROLLBAR       IDC_MEM_SCROLL,303,29,9,172,SBS_VERT
     GROUPBOX        "Memory Patch",IDC_STATIC,3,204,307,57
     EDITTEXT        IDC_ADDRESS_PATCH,124,220,97,12
@@ -922,12 +922,12 @@ END
 //
 
 IDB_PS2SILVER           BITMAP                  "ps2_silver.bmp"
-#endif    // Inglés (Estados Unidos) resources
+#endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Inglés (Reino Unido) resources
+// English (U.K.) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
 #ifdef _WIN32
@@ -982,12 +982,12 @@ END
 //
 
 SPLASH_LOGO             BITMAP                  "..\\pcsxAbout.bmp"
-#endif    // Inglés (Reino Unido) resources
+#endif    // English (U.K.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Español resources
+// Spanish resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ESN)
 #ifdef _WIN32
@@ -1125,12 +1125,12 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Español resources
+#endif    // Spanish resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Español (Argentina) resources
+// Spanish (Argentina) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ESS)
 #ifdef _WIN32
@@ -1167,26 +1167,26 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     DEFPUSHBUTTON   "OK",IDOK,207,223,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,260,223,50,14
-    RTEXT           "Graphics",IDC_GRAPHICS,50,5,41,10,SS_CENTERIMAGE
-    RTEXT           "Sound",IDC_SOUND,200,5,43,10,SS_CENTERIMAGE
-    RTEXT           "Cdvdrom",IDC_CDVDROM,65,95,30,10,SS_CENTERIMAGE
-    RTEXT           "Bios",IDC_BIOS,228,185,15,10,SS_CENTERIMAGE
+    CTEXT           "Graphics",IDC_GRAPHICS,50,5,62,10,SS_CENTERIMAGE
+    CTEXT           "Sound",IDC_SOUND,200,5,71,10,SS_CENTERIMAGE
+    CTEXT           "Cdvdrom",IDC_CDVDROM,55,95,56,10,SS_CENTERIMAGE
+    CTEXT           "Bios",IDC_BIOS,208,185,61,10,SS_CENTERIMAGE
     COMBOBOX        IDC_LISTPAD1,10,60,145,74,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     PUSHBUTTON      "Configure...",IDC_CONFIGPAD1,10,80,45,12
     PUSHBUTTON      "Test...",IDC_TESTPAD1,60,80,45,12
     PUSHBUTTON      "About...",IDC_ABOUTPAD1,110,80,45,12
-    RTEXT           "Second Controller",IDC_SECONDCONTROLLER,205,50,58,10,
+    CTEXT           "Second Controller",IDC_SECONDCONTROLLER,191,50,90,10,
                     SS_CENTERIMAGE
     COMBOBOX        IDC_LISTPAD2,166,60,145,74,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     PUSHBUTTON      "Configure...",IDC_CONFIGPAD2,165,80,45,12
     PUSHBUTTON      "Test...",IDC_TESTPAD2,215,80,45,12
     PUSHBUTTON      "About...",IDC_ABOUTPAD2,265,80,45,12
-    CTEXT           "First Controller",IDC_FIRSTCONTROLLER,55,50,48,10,
+    CTEXT           "First Controller",IDC_FIRSTCONTROLLER,41,50,82,10,
                     SS_CENTERIMAGE
-    PUSHBUTTON      "Set Bios Directory",IDC_BIOSDIR,90,223,65,14
-    PUSHBUTTON      "Set Plugins Directory",IDC_PLUGINSDIR,7,223,75,14
+    PUSHBUTTON      "Set Bios Directory",IDC_BIOSDIR,14,223,134,14
+    PUSHBUTTON      "Set Plugins Directory",IDC_PLUGINSDIR,14,204,134,14
     COMBOBOX        IDC_LISTDEV9,165,105,145,74,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Configure...",IDC_CONFIGDEV9,165,125,43,12
@@ -1198,13 +1198,13 @@ BEGIN
     PUSHBUTTON      "Configure...",IDC_CONFIGUSB,10,170,43,12
     PUSHBUTTON      "Test...",IDC_TESTUSB,60,170,45,12
     PUSHBUTTON      "About...",IDC_ABOUTUSB,110,170,45,12
-    CTEXT           "Usb",IDC_USB,66,140,30,10,SS_CENTERIMAGE
+    CTEXT           "Usb",IDC_USB,59,140,47,10,SS_CENTERIMAGE
     COMBOBOX        IDC_LISTFW,165,151,145,74,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     PUSHBUTTON      "Configure...",IDC_CONFIGFW,165,169,43,12
     PUSHBUTTON      "Test...",IDC_TESTFW,214,169,45,12
     PUSHBUTTON      "About...",IDC_ABOUTFW,265,169,45,12
-    LTEXT           "FireWire",IDC_STATIC,227,141,39,8
+    CTEXT           "FireWire",IDC_FW,206,141,60,8
 END
 
 IDD_BPEXEC DIALOG  0, 0, 182, 61
@@ -1295,12 +1295,12 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICON                ICON                    "Cdrom02.ico"
-#endif    // Español (Argentina) resources
+#endif    // Spanish (Argentina) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// Griego resources
+// Greek resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ELL)
 #ifdef _WIN32
@@ -1411,50 +1411,52 @@ BEGIN
     SCROLLBAR       IDC_DEBUG_SCROLL_IOP,340,7,11,93,SBS_VERT
 END
 
-IDD_CPUDLG DIALOGEX 0, 0, 222, 356
+IDD_CPUDLG DIALOGEX 0, 0, 250, 377
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "EERec -  EE/IOP recompiler (need MMX/SSE)",
                     IDC_CPU_EEREC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
-                    110,161,18
+                    103,236,18
     CONTROL         "VU0rec - enable recompiler for VU0 unit",IDC_CPU_VU0REC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,141,154,18
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,15,
+                    127,219,18
     CONTROL         "VU1rec - enable recompiler for VU1 unit",IDC_CPU_VU1REC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,155,142,18
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,15,
+                    144,228,18
     CONTROL         "Multi threaded GS mode (MTGS)\n    (faster on dual core/HT procs, requires pcsx2 restart)",
                     IDC_CPU_GSMULTI,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | 
-                    WS_TABSTOP,7,185,208,18
+                    WS_TABSTOP,7,166,236,30
     CONTROL         "Dual Core Mode (DC) - Much faster but only valid with MTGS",
-                    IDC_CPU_MULTI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
-                    207,208,13
+                    IDC_CPU_MULTI,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | 
+                    WS_TABSTOP,7,199,236,26
     CONTROL         "Normal - All frames are rendered as fast as possible.",
-                    IDC_CPU_FL_NORMAL,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    15,241,193,10
+                    IDC_CPU_FL_NORMAL,"Button",BS_AUTORADIOBUTTON | 
+                    BS_MULTILINE | WS_GROUP,14,236,221,17
     CONTROL         "Limit - Force frames to normal speeds if too fast.",
-                    IDC_CPU_FL_LIMIT,"Button",BS_AUTORADIOBUTTON,15,254,180,
-                    10
+                    IDC_CPU_FL_LIMIT,"Button",BS_AUTORADIOBUTTON | 
+                    BS_MULTILINE,14,254,222,22
     CONTROL         "Frame Skip - In order to achieve normal speeds,\n      some frames are skipped (fast).\n      Fps displayed counts skipped frames too.",
                     IDC_CPU_FL_SKIP,"Button",BS_AUTORADIOBUTTON | 
-                    BS_MULTILINE,15,268,187,28
-    CONTROL         "VU Skip - Same as 'Frame Skip', but tries to skip more.\n       Artifcats might be present, but will be faster.",
+                    BS_MULTILINE,15,277,221,35
+    CONTROL         "VU Skip - Same as 'Frame Skip', but tries to skip more.\n       Artifacts might be present, but will be faster.",
                     IDC_CPU_FL_SKIPVU,"Button",BS_AUTORADIOBUTTON | 
-                    BS_MULTILINE,15,300,187,16
-    DEFPUSHBUTTON   "OK",IDOK,7,335,61,14
-    PUSHBUTTON      "Cancel",IDCANCEL,79,335,50,14,NOT WS_TABSTOP
-    LTEXT           "CPU vendor ",IDC_VENDORNAME,12,24,42,12
-    GROUPBOX        "",IDC_STATIC,7,12,207,90
-    LTEXT           "Family",IDC_FAMILYNAME,12,42,36,12
-    LTEXT           "Cpu Speed",IDC_CPUSPEEDNAME,12,60,38,12
-    LTEXT           "",IDC_VENDORINPUT,54,24,154,12
-    LTEXT           "",IDC_FAMILYINPUT,54,42,154,12
-    LTEXT           "",IDC_FEATURESINPUT,54,82,154,12
-    LTEXT           "",IDC_CPUSPEEDINPUT,54,60,157,12
+                    BS_MULTILINE,15,314,220,31
+    DEFPUSHBUTTON   "OK",IDOK,59,356,61,14
+    PUSHBUTTON      "Cancel",IDCANCEL,131,356,61,14,NOT WS_TABSTOP
+    LTEXT           "CPU Vendor",IDC_VENDORNAME,12,23,88,8
+    LTEXT           "Family",IDC_FAMILYNAME,12,41,88,8
+    LTEXT           "Cpu Speed",IDC_CPUSPEEDNAME,12,60,88,8
+    LTEXT           "",IDC_VENDORINPUT,112,24,124,8
+    LTEXT           "",IDC_FAMILYINPUT,112,41,124,8
+    LTEXT           "",IDC_FEATURESINPUT,111,79,124,8
+    LTEXT           "",IDC_CPUSPEEDINPUT,111,61,124,8
     GROUPBOX        "VU Recompilers - All options are set by default",
-                    IDC_CPU_VUGROUP,7,131,207,46
-    GROUPBOX        "Frame Limiting",IDC_STATIC,7,228,207,94
-    LTEXT           "Features",IDC_FEATURESNAME,12,78,34,12
+                    IDC_CPU_VUGROUP,7,119,236,46
+    GROUPBOX        "Frame Limiting",IDC_FRAMELIMIT,7,225,236,127
+    LTEXT           "Features",IDC_FEATURESNAME,12,78,88,8
+    GROUPBOX        "",IDC_STATIC,7,7,236,90
 END
 
 
@@ -1485,9 +1487,9 @@ BEGIN
     IDD_CPUDLG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 215
+        RIGHTMARGIN, 243
         TOPMARGIN, 7
-        BOTTOMMARGIN, 349
+        BOTTOMMARGIN, 370
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1518,7 +1520,7 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Griego resources
+#endif    // Greek resources
 /////////////////////////////////////////////////////////////////////////////
 
 

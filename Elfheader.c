@@ -168,10 +168,12 @@ unsigned int parseCommandLine( char *filename )
 		args[ 255 ] = 0;
 		memcpy( &PS2MEM_BASE[ args_ptr ], args, 256 );				//params 1, 2, etc copied
 		memset( &PS2MEM_BASE[ args_ptr + strlen( args ) ], 0, 256 - strlen( args ) );
-#ifdef __WIN32__
+#ifdef _WIN32
 		p = strrchr( filename, '\\' );
 #else	//linux
 		p = strrchr( filename, '/' );
+        if( p == NULL )
+            p = strchr(filename, '\\');
 #endif
 		if ( p )
       {
@@ -386,7 +388,11 @@ BOOL loadProgramHeaders( char *Exepath )
 					} else {
 						size = elfProgH[ i ].p_filesz;
 					}
-					memcpy(&PS2MEM_BASE[elfProgH[ i ].p_paddr & 0x1ffffff], 
+
+                    if( elfProgH[ i ].p_vaddr != elfProgH[ i ].p_paddr )
+                        SysPrintf("ElfProgram different load addrs: paddr=0x%8.8x, vaddr=0x%8.8x\n", elfProgH[ i ].p_paddr, elfProgH[ i ].p_vaddr);
+                    // used to be paddr
+					memcpy(&PS2MEM_BASE[elfProgH[ i ].p_vaddr & 0x1ffffff], 
 						   &elfdata[elfProgH[ i ].p_offset],
 						   size);
 #ifdef ELF_LOG  
@@ -620,7 +626,7 @@ int loadElfFile(char *filename) {
    // Applying patches
     if (Config.Patch) {
 		sprintf(str, "%8.8x", crc);
-#ifdef __WIN32__
+#ifdef _WIN32
 		sprintf(str2,"patches not found can't apply patches crc=%8.8x",crc);//if patches found it will overwritten :p
 		if (gApp.hConsole) SetConsoleTitle(str2);
 #endif
@@ -639,22 +645,54 @@ int loadElfFile(char *filename) {
 	return 0;
 }
 
-extern int g_VUSignedZero;
+#include "VU.h"
 extern int g_FFXHack;
-extern int g_VUExtraFlags;
+extern int path3hack;
+int g_VUGameFixes = 0;
 void LoadGameSpecificSettings()
 {
-	if( ElfCRC==0x0c414549 ) { // spacefisherman
-		g_VUSignedZero = 1;
-	}
-    if( ElfCRC == 0x4C9EE7DF || ElfCRC == 0xC9C145BF ) { // crazy taxi
-        g_VUExtraFlags = 1;
-    }
+    // default
+    g_VUGameFixes = 0;
+    g_FFXHack = 0;
 
-	// ffx, ffx2, harvest moon
-	if(ElfCRC==0xbb3d833a||ElfCRC==0xa39517ab||ElfCRC==0x6A4EFE60||ElfCRC==0x48FE0C71||ElfCRC==0x9aac530d||
-		ElfCRC==0x9AAC5309||ElfCRC==0x8A6D7F14||ElfCRC==0x304C115C||ElfCRC==0xF0A6D880||ElfCRC==0xa39517ae||
-        ElfCRC==0xa39517a9||ElfCRC==0x941bb7d9||ElfCRC==0x9AAC530B||ElfCRC==0x658597e2||ElfCRC==0x941BB7DE) {
-		g_FFXHack = 1;
+    switch(ElfCRC) {
+        case 0x0c414549: // spacefisherman, missing gfx
+		    g_VUGameFixes |= VUFIX_SIGNEDZERO;
+            break;
+        case 0x4C9EE7DF: // crazy taxi (u)
+        case 0xC9C145BF: // crazy taxi, missing gfx
+            g_VUGameFixes |= VUFIX_EXTRAFLAGS;
+            break;
+
+        case 0xb99379b7: // erementar gerad (discolored chars)
+            g_VUGameFixes |= VUFIX_XGKICKDELAY2;
+            break;
+		case 0xa08c4057:  //Sprint Cars (SLUS)
+		case 0x8b0725d5:  //Flinstones Bedrock Racing (SLES)
+			path3hack = 1;
+			break;
+
+        case 0x6a4efe60: // ffx(j)
+		case 0xA39517AB: // ffx(e)
+		case 0xBB3D833A: // ffx(u)
+		case 0x941bb7d9: // ffx(g)
+		case 0xD9FC6310: // ffx int(j)
+        case 0xa39517ae: // ffx(f)
+        case 0xa39517a9: // ffx(i)
+        case 0x658597e2: // ffx int
+        case 0x941BB7DE: // ffx(s)
+        case 0x3866CA7E: // ffx(asia)
+        case 0x48FE0C71: // ffx2 (u)
+		case 0x9aac530d: // ffx2 (g)
+		case 0x9AAC5309: // ffx2 (e)
+		case 0x8A6D7F14: // ffx2 (j)
+        case 0x9AAC530B: // ffx2 (i)
+        case 0x9AAC530A: // ffx2 (f)
+        case 0xe1fd9a2d: // ffx2 last mission (?)
+        case 0x93f9b89a: // ffx2 demo (g)
+        case 0x304C115C: // harvest moon - awl
+		case 0xF0A6D880: // harvest moon - sth
+            g_FFXHack = 1;
+            break;		
 	}
 }

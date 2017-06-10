@@ -16,19 +16,17 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef __MSCW32__
-#pragma warning(disable:4244)
-#endif
+#define PLUGINtypedefs // for GSgifTransfer1
 
 #include <math.h>
 #include <stdlib.h>
 #include "Common.h"
-#include "Debug.h"
-#include "R5900.h"
 #include "VUmicro.h"
 #include "VUflags.h"
 #include "VUops.h"
 #include "GS.h"
+
+extern _GSgifTransfer1    GSgifTransfer1;
 
 //Lower/Upper instructions can use that..
 #define _Ft_ ((VU->code >> 16) & 0x1F)  // The rt part of the instruction register 
@@ -334,7 +332,7 @@ void _vuAddLowerStalls(VURegs * VU, _VURegsNum *VUregsn) {
 /******************************/
 static u32 d;
 
-static float vuDouble(u32 f)
+float vuDouble(u32 f)
 {
 	switch(f & 0x7f800000){
 		case 0x0:

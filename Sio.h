@@ -41,6 +41,7 @@ typedef struct {
 	u32 lastsector;
 	u32 sector;
 	u32 k;
+	u32 count;
 } _sio;
 _sio sio;
 
@@ -72,15 +73,18 @@ int Mcd1Size, Mcd2Size;
 
 int  sioInit();
 void sioShutdown();
+void psxSIOShutdown();
 unsigned char sioRead8();
 void sioWrite8(unsigned char value);
 void sioWriteCtrl16(unsigned short value);
 int  sioInterrupt();
 int  sioFreeze(gzFile f, int Mode);
+void InitializeSIO(u8 value);
 
 FILE *LoadMcd(int mcd);
 void ReadMcd(int mcd, char *data, u32 adr, int size);
 void SaveMcd(int mcd, char *data, u32 adr, int size);
+void EraseMcd(int mcd, u32 adr);
 void CreateMcd(char *mcd);
 
 typedef struct {
@@ -92,7 +96,7 @@ typedef struct {
 	unsigned char Flags;
 } McdBlock;
 
-#ifdef __WIN32__
+#ifdef _MSC_VER
 #pragma pack(1)
 #endif
 struct mc_command_0x26_tag{
@@ -100,9 +104,9 @@ struct mc_command_0x26_tag{
 	u16	sectorSize;	//+03 divide to it
 	u16 field_2C;	//+05 divide to it
 	u32	mc_size;	//+07
-	u8	_xor;		//+0b don't forget to recalculate it!!!
+	u8	xor;		//+0b don't forget to recalculate it!!!
 	u8	Z;			//+0c
-#ifdef __WIN32__
+#ifdef _MSC_VER
 };
 #pragma pack()
 #else

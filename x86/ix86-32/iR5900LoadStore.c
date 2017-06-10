@@ -16,6 +16,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+// stop compiling if NORECBUILD build (only for Visual Studio)
+#if !(defined(_MSC_VER) && defined(PCSX2_NORECBUILD))
+
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -24,7 +27,7 @@
 #include "ix86/ix86.h"
 #include "iR5900.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #pragma warning(disable:4244)
 #pragma warning(disable:4761)
 #endif
@@ -61,6 +64,8 @@ REC_FUNC(SWC1);
 REC_FUNC(LQC2);
 REC_FUNC(SQC2);
 
+void SetFastMemory(int bSetFast) {}
+
 #else
 
 PCSX2_ALIGNED16(u64 retValues[2]);
@@ -90,7 +95,7 @@ void _eeOnLoadWrite(int reg)
 	}
 }
 
-#ifdef WIN32_VIRTUAL_MEM
+#ifdef PCSX2_VIRTUAL_MEM
 
 extern void iMemRead32Check();
 
@@ -839,8 +844,7 @@ void recLoad64(u32 imm, int align)
 		int dohw;
 		int mmregs = _eePrepareReg(_Rs_);
 
-		mmreg = _allocCheckGPRtoMMX(g_pCurInstInfo, _Rt_, MODE_WRITE);
-		if( _Rt_ && mmreg >= 0 ) {
+		if( _Rt_ && (mmreg = _allocCheckGPRtoMMX(g_pCurInstInfo, _Rt_, MODE_WRITE)) >= 0 ) {
 			dohw = recSetMemLocation(_Rs_, imm, mmregs, align, 0);
 
 			MOVQRmtoROffset(mmreg, ECX, PS2MEM_BASE_+s_nAddMemOffset);
@@ -1891,7 +1895,8 @@ void recStore_raw(EEINST* pinst, int bit, int x86reg, int gprreg, u32 offset)
 			else {
 				if( (mmreg = _allocCheckGPRtoMMX(pinst, gprreg, MODE_READ)) >= 0 ) {	
 					MOVQRtoRmOffset(ECX, mmreg, PS2MEM_BASE_+offset);
-					SetMMXstate();
+                    SetMMXstate();
+                    _freeMMXreg(mmreg);
 				}
 				else if( _hasFreeMMXreg() ) {
 					mmreg = _allocMMXreg(-1, MMX_GPR+gprreg, MODE_READ);
@@ -3994,6 +3999,7 @@ void recLD( void )
 {
 	_deleteEEreg(_Rs_, 1);
 	_eeOnLoadWrite(_Rt_);
+    EEINST_RESETSIGNEXT(_Rt_); // remove the sign extension
 	_deleteEEreg(_Rt_, 0);
 
 	MOV32MtoR( EAX, (int)&cpuRegs.GPR.r[ _Rs_ ].UL[ 0 ] );
@@ -4020,6 +4026,7 @@ void recLDL( void )
 {
 	_deleteEEreg(_Rs_, 1);
 	_eeOnLoadWrite(_Rt_);
+    EEINST_RESETSIGNEXT(_Rt_); // remove the sign extension
 	_deleteEEreg(_Rt_, 0);
 	MOV32ItoM( (int)&cpuRegs.code, cpuRegs.code );
 	MOV32ItoM( (int)&cpuRegs.pc, pc );
@@ -4031,6 +4038,7 @@ void recLDR( void )
 {
 	_deleteEEreg(_Rs_, 1);
 	_eeOnLoadWrite(_Rt_);
+    EEINST_RESETSIGNEXT(_Rt_); // remove the sign extension
 	_deleteEEreg(_Rt_, 0);
 	MOV32ItoM( (int)&cpuRegs.code, cpuRegs.code );
 	MOV32ItoM( (int)&cpuRegs.pc, pc );
@@ -4042,6 +4050,7 @@ void recLQ( void )
 {
 	_deleteEEreg(_Rs_, 1);
 	_eeOnLoadWrite(_Rt_);
+    EEINST_RESETSIGNEXT(_Rt_); // remove the sign extension
 	_deleteEEreg(_Rt_, 0);
 
 	MOV32MtoR( EAX, (int)&cpuRegs.GPR.r[ _Rs_ ].UL[ 0 ] );
@@ -4284,3 +4293,5 @@ void recSQC2( void )
 #endif
 
 #endif
+
+#endif // PCSX2_NORECBUILD

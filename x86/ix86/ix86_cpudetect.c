@@ -15,11 +15,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
-#if defined (__WIN32__)
-
+#if defined (_WIN32)
 #include <windows.h>
-
 #endif
 
 #include <string.h>
@@ -27,7 +24,7 @@
 
 #include "ix86.h"
 
-#if defined (__VCNET2005__)
+#if defined (_MSC_VER) && _MSC_VER >= 1400
 
    void __cpuid(int* CPUInfo, int InfoType);
    unsigned __int64 __rdtsc();
@@ -40,17 +37,25 @@
 CAPABILITIES cpucaps;
 CPUINFO cpuinfo;
 
+#define cpuid(cmd,a,b,c,d) \
+  __asm__ __volatile__("xchgl %%ebx, %1; cpuid; xchgl %%ebx, %1" \
+		: "=a" (a), "=r" (b), "=c" (c), "=d" (d)  : "0" (cmd))
+
 static s32 iCpuId( u32 cmd, u32 *regs ) 
 {
-   int flag;
+   int flag=1;
 
-#if defined (__VCNET2005__)
+#if defined (_MSC_VER) && _MSC_VER >= 1400
 
    __cpuid( regs, cmd );
 
    return 0;
 
-#elif defined (__MSCW32__) && !defined(__x86_64__)
+#elif defined (_MSC_VER) 
+
+#ifdef __x86_64__
+   assert(0);
+#else // __x86_64__
    __asm 
    {
       push ebx;
@@ -85,16 +90,16 @@ static s32 iCpuId( u32 cmd, u32 *regs )
       pop edi;
       pop ebx;
    }
-
+#endif // __x86_64__
    return 0;
 
 
 #else
 
+#ifndef __x86_64__
+   // see if we can use cpuid
    __asm__ __volatile__ (
-#ifdef __x86_64__
-	"sub $0x18, %%rsp\n"
-#endif
+      "sub $0x18, %%esp\n"
       "pushf\n"
       "pop %%eax\n"
       "mov %%eax, %%edx\n"
@@ -105,40 +110,22 @@ static s32 iCpuId( u32 cmd, u32 *regs )
       "pop %%eax\n"
       "xor %%edx, %%eax\n"
       "mov %%eax, %0\n"
-#ifdef __x86_64__
-	"add $0x18, %%rsp\n"
-#endif
+	  "add $0x18, %%esp\n"
       : "=r"(flag) :
    );
-   
-   if ( ! flag )
-   {
-      return -1;
-   }
-
-   __asm__ __volatile__ (
-      "push %%ebx\n"
-      "push %%edx\n"
-      "mov %4, %%eax\n"
-      "cpuid\n"
-      "mov %%eax, %0\n"
-      "mov %%ebx, %1\n"
-      "mov %%ecx, %2\n"
-      "mov %%edx, %3\n"
-      "pop %%edx\n"
-      "pop %%ebx\n"
-      : "=m" (regs[0]), "=m" (regs[1]), "=m" (regs[2]), "=m" (regs[3])
-      : "m"(cmd)
-      : "eax", "ecx"//, "edx", "ebx"
-   );
-
-   return 0;
 #endif
+   
+   if ( !flag )
+       return -1;
+
+   cpuid(cmd, regs[0], regs[1], regs[2], regs[3]);
+
+#endif // _MSC_VER
 }
 
 u64 GetCPUTick( void ) 
 {
-#if defined (__VCNET2005__)
+#if defined (_MSC_VER) && _MSC_VER >= 1400
 
    return __rdtsc();
 
@@ -159,13 +146,6 @@ u64 GetCPUTick( void )
 
 #include <sys/time.h>
 #include <errno.h>
-
-u32 timeGetTime( void ) 
-{
-	struct timeval tv;
-	gettimeofday( &tv, 0 );
-	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
 
 #endif
 
@@ -214,12 +194,14 @@ s64 CPUSpeedHz( unsigned int time )
 }
 
 ////////////////////////////////////////////////////
+int arr[] = {0x65746e49, 0x2952286c, 0x726f4320, 0x4d542865,
+        0x51203229,0x20646175,0x20555043,0x20202020 ,
+        0x20202020,0x20402020,0x36362e32,0x7a4847};
+
 void cpudetectInit( void ) 
 {
    u32 regs[ 4 ];
    u32 cmds;
-   u32 AMDspeed;
-   s8 AMDspeedString[10];
    int cputype=0;            // Cpu type
    //AMD 64 STUFF
    u32 x86_64_8BITBRANDID;
@@ -263,6 +245,7 @@ void cpudetectInit( void )
          }
       }
    }
+   
    switch(cpuinfo.x86PType)
    {
       case 0:
@@ -284,183 +267,11 @@ void cpudetectInit( void )
    if ( cpuinfo.x86ID[ 0 ] == 'G' ){ cputype=0;}//trick lines but if you know a way better ;p
    if ( cpuinfo.x86ID[ 0 ] == 'A' ){ cputype=1;}
    
-   if ( cputype == 0 ) //intel cpu
-   {
-      if( ( cpuinfo.x86Family >= 7 ) && ( cpuinfo.x86Family < 15 ) )
-      {
-         strcpy( cpuinfo.x86Fam, "Intel P6 family (Not PIV and Higher then PPro" );
-      }
-      else
-      {
-         switch( cpuinfo.x86Family )
-         {     
-            // Start at 486 because if it's below 486 there is no cpuid instruction
-            case 4:
-               strcpy( cpuinfo.x86Fam, "Intel 486" );
-               break;
-            case 5:     
-               switch( cpuinfo.x86Model )
-               {
-               case 4:
-               case 8:     // 0.25 µm
-                  strcpy( cpuinfo.x86Fam, "Intel Pentium (MMX)");
-                  break;
-               default:
-                  strcpy( cpuinfo.x86Fam, "Intel Pentium" );
-               }
-               break;
-            case 6:     
-               switch( cpuinfo.x86Model )
-               {
-               case 0:     // Pentium pro (P6 A-Step)
-               case 1:     // Pentium pro
-                  strcpy( cpuinfo.x86Fam, "Intel Pentium Pro" );
-                  break;
+    memset(cpuinfo.x86Fam, 0, sizeof(cpuinfo.x86Fam));
+    iCpuId( 0x80000002, (u32*)cpuinfo.x86Fam);
+    iCpuId( 0x80000003, (u32*)(cpuinfo.x86Fam+16));
+    iCpuId( 0x80000004, (u32*)(cpuinfo.x86Fam+32));
 
-               case 2:     // 66 MHz FSB
-               case 5:     // Xeon/Celeron (0.25 µm)
-               case 6:     // Internal L2 cache
-                  strcpy( cpuinfo.x86Fam, "Intel Pentium II" );
-                  break;
-
-               case 7:     // Xeon external L2 cache
-               case 8:     // Xeon/Celeron with 256 KB on-die L2 cache
-               case 10:    // Xeon/Celeron with 1 or 2 MB on-die L2 cache
-               case 11:    // Xeon/Celeron with Tualatin core, on-die cache
-                  strcpy( cpuinfo.x86Fam, "Intel Pentium III" );
-                  break;
-			   case 15:    // Core 2 Duo Allendale/Conroe
-				  strcpy( cpuinfo.x86Fam, "Intel Core 2 Duo" );
-				  break;
-
-               default:
-                  strcpy( cpuinfo.x86Fam, "Intel Pentium Pro (Unknown)" );
-               }
-               break;
-            case 15:
-               switch( cpuinfo.x86Model )
-               {
-               case 0:     // Willamette (A-Step)
-               case 1:     // Willamette 
-                  strcpy( cpuinfo.x86Fam, "Willamette Intel Pentium IV" );
-                  break;
-               case 2:     // Northwood 
-                  strcpy( cpuinfo.x86Fam, "Northwood Intel Pentium IV" );
-                  break;
-
-               default:
-                  strcpy( cpuinfo.x86Fam, "Intel Pentium IV (Unknown)" );
-                  break;
-               }
-               break;
-            default:
-               strcpy( cpuinfo.x86Fam, "Unknown Intel CPU" );
-         }
-      }
-   }
-   else if ( cputype == 1 ) //AMD cpu
-   {
-      if( cpuinfo.x86Family >= 7 )
-      {
-		  if((x86_64_12BITBRANDID !=0) || (x86_64_8BITBRANDID !=0))
-		  {
-		    if(x86_64_8BITBRANDID == 0 )
-		    {
-               switch((x86_64_12BITBRANDID >>6)& 0x3f)
-			   {
-			    case 4:
-				 strcpy(cpuinfo.x86Fam,"AMD Athlon(tm) 64 Processor");
-                 AMDspeed = 22 + (x86_64_12BITBRANDID & 0x1f);
-				 //AMDspeedString = strtol(AMDspeed, (char**)NULL,10);
-				 sprintf(AMDspeedString," %d",AMDspeed);
-				 strcat(AMDspeedString,"00+");
-				 strcat(cpuinfo.x86Fam,AMDspeedString);
-				 break;
-			    case 12: 
-				 strcpy(cpuinfo.x86Fam,"AMD Opteron(tm) Processor");
-				 break;
-			    case 5:
-				  strcpy( cpuinfo.x86Fam, "AMD Athlon X2 Processor" );
-				  AMDspeed = 22 + (x86_64_12BITBRANDID & 0x1f);
-				 //AMDspeedString = strtol(AMDspeed, (char**)NULL,10);
-				 sprintf(AMDspeedString," %d",AMDspeed);
-				 strcat(AMDspeedString,"00+");
-				 strcat(cpuinfo.x86Fam,AMDspeedString);
-                  break;
-			   case 44:
-				   strcpy( cpuinfo.x86Fam, "AMD Opteron(tm) Dual Core Processor" );
-                  break;
-			    default:
-				   strcpy(cpuinfo.x86Fam,"Unknown AMD 64 proccesor");
-				   
-			    }
-		     }
-		     else //8bit brand id is non zero
-		     {
-                strcpy(cpuinfo.x86Fam,"Unsupported yet AMD64 cpu");
-		     }
-		  }
-		  else
-		  {		 
-			  strcpy( cpuinfo.x86Fam, "AMD K7+ Processor" );
-		  }
-      }
-      else
-      {
-         switch ( cpuinfo.x86Family )
-         {
-            case 4:
-               switch( cpuinfo.x86Model )
-               {
-               case 14: 
-               case 15:       // Write-back enhanced
-                  strcpy( cpuinfo.x86Fam, "AMD 5x86 Processor" );
-                  break;
-
-               case 3:        // DX2
-               case 7:        // Write-back enhanced DX2
-               case 8:        // DX4
-               case 9:        // Write-back enhanced DX4
-                  strcpy( cpuinfo.x86Fam, "AMD 486 Processor" );
-                  break;
-			   			   
-
-               default:
-                  strcpy( cpuinfo.x86Fam, "AMD Unknown Processor" );
-
-               }
-               break;
-
-            case 5:     
-               switch( cpuinfo.x86Model)
-               {
-               case 0:     // SSA 5 (75, 90 and 100 Mhz)
-               case 1:     // 5k86 (PR 120 and 133 MHz)
-               case 2:     // 5k86 (PR 166 MHz)
-               case 3:     // K5 5k86 (PR 200 MHz)
-                  strcpy( cpuinfo.x86Fam, "AMD K5 Processor" );
-                  break;
-
-               case 6:     
-               case 7:     // (0.25 µm)
-               case 8:     // K6-2
-               case 9:     // K6-III
-               case 14:    // K6-2+ / K6-III+
-                  strcpy( cpuinfo.x86Fam, "AMD K6 Series Processor" );
-                  break;
-
-               default:
-                  strcpy( cpuinfo.x86Fam, "AMD Unknown Processor" );
-               }
-               break;
-            case 6:     
-               strcpy( cpuinfo.x86Fam, "AMD Athlon XP Processor" );
-               break;
-            default:
-               strcpy( cpuinfo.x86Fam, "Unknown AMD CPU" ); 
-         }
-      }
-   }
    //capabilities
    cpucaps.hasFloatingPointUnit                         = ( cpuinfo.x86Flags >>  0 ) & 1;
    cpucaps.hasVirtual8086ModeEnhancements               = ( cpuinfo.x86Flags >>  1 ) & 1;
