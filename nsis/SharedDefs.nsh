@@ -28,8 +28,6 @@ Name "${APP_NAME}"
 ; MUI STUFF
 !include "MUI2.nsh"
 
-!define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP "banner.bmp"
 !define MUI_COMPONENTSPAGE_SMALLDESC
 !define MUI_ICON "AppIcon.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\nsis3-uninstall.ico"

@@ -14,6 +14,8 @@ Var IsAdmin
 Var DirectXSetupError
 
 ; Dialog Vars
+Var CustomImage_Portable
+Var CustomImage_Portable.Bitmap
 Var hwnd
 Var PreInstall_Dialog
 Var PreInstall_DlgBack
@@ -24,12 +26,17 @@ Var InstallMode_DlgBack
 Var InstallMode_DlgNext
 Var InstallMode_Label
 Var InstallMode_Full
-Var InstallMode_Portable
+
 !include "nsDialogs.nsh"
 
 Page Custom IsUserAdmin
 Page Custom PreInstallDialog
 Page Custom InstallMode InstallModeLeave
+
+;Vars and Pages for the Portable Install Section
+Var InstallMode_Portable
+
+;Page Custom Install_SelectionCheck
 
 Function IsUserAdmin
 !include WinVer.nsh
@@ -139,35 +146,40 @@ FunctionEnd
 
 Function InstallMode
 
-nsDialogs::Create /NOUNLOAD 1018
+nsDialogs::Create /NOUNLOAD 1044
 Pop $InstallMode_Dialog
 
+   ${NSD_CreateBitmap} 0u -193u 0u 300u ""
+
+    Pop $CustomImage_Portable
+
+    ${NSD_SetImage} $CustomImage_Portable "C:\Program Files (x86)\NSIS\Contrib\Graphics\Header\pcsx2banner.bmp" $CustomImage_Portable.Bitmap
+	
     GetDlgItem $InstallMode_DlgBack $HWNDPARENT 3
     EnableWindow $InstallMode_DlgBack 0
 
     GetDlgItem $InstallMode_DlgNext $HWNDPARENT 1
     EnableWindow $InstallMode_DlgNext 0
 
-${NSD_CreateLabel} 0 0 100% 10u "Select an installation mode for PCSX2."
+${NSD_CreateLabel} 10 65 95% 10u "Select an installation mode for PCSX2."
 Pop $InstallMode_Label
 
-${NSD_CreateRadioButton} 0 35 100% 10u "Full Installation"
+${NSD_CreateRadioButton} 10 85 95% 10u "Full Installation"
 Pop $InstallMode_Full
+
+${NSD_OnClick} $InstallMode_Full InstallMode_UsrWait
+${NSD_CreateLabel} 10 105 95% 20u "PCSX2 will be installed in Program Files unless another directory is specified. User files are stored in the Documents/PCSX2 directory."
+
+${NSD_CreateRadioButton} 10 155 95% 10u "Portable Installation"
+Pop $InstallMode_Portable
+    ${NSD_OnClick} $InstallMode_Portable InstallMode_UsrWait
+    ${NSD_CreateLabel} 10 175 95% 20u "Install PCSX2 to any directory you want. Choose this option if you prefer to have all of your files in the same folder or frequently update PCSX2 through Orphis' Buildbot."
 
 ${If} $IsAdmin == 0
 EnableWindow $InstallMode_Full 0
 ${EndIf}
-
-${NSD_OnClick} $InstallMode_Full InstallMode_UsrWait
-${NSD_CreateLabel} 10 55 100% 20u "PCSX2 will be installed in Program Files unless another directory is specified. User files are stored in the Documents/PCSX2 directory."
-
-${NSD_CreateRadioButton} 0 95 100% 10u "Portable Installation"
-Pop $InstallMode_Portable
-    ${NSD_OnClick} $InstallMode_Portable InstallMode_UsrWait
-    ${NSD_CreateLabel} 10 115 100% 20u "Install PCSX2 to any directory you want. Choose this option if you prefer to have all of your files in the same folder or frequently update PCSX2 through Orphis' Buildbot."
-
+	
 nsDialogs::Show
-
 FunctionEnd
 
 Function InstallMode_UsrWait
@@ -181,7 +193,7 @@ ${NSD_GetState} $InstallMode_Portable $1
 
 ${If} ${BST_CHECKED} == $0
 SetOutPath "$TEMP"
-File "pcsx2-${APP_VERSION}-include_standard.exe"
+File /nonfatal "pcsx2-${APP_VERSION}-include_standard.exe"
 ExecShell open "$TEMP\pcsx2-${APP_VERSION}-include_standard.exe"
 Quit
 ${EndIf}
@@ -190,30 +202,31 @@ FunctionEnd
 ; ----------------------------------
 ;     Portable Install Section
 ; ----------------------------------
-!insertmacro MUI_PAGE_COMPONENTS
+
+; The default installation directory for the portable binary.
+InstallDir "$DOCUMENTS\PCSX2 ${APP_VERSION}"
+
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
+
+!include SharedCore.nsh
+
+Section "" INST_PORTABLE
+${If} ${BST_CHECKED} == $1
+${AndIf} ${BST_CHECKED} == $2 
+SetOutPath "$INSTDIR"
+File portable.ini
+${EndIf}
+SectionEnd
+
+Section "" SID_PCSX2
+SectionEnd
 
 !define MUI_FINISHPAGE_RUN "$INSTDIR\pcsx2.exe"
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW ModifyRunCheckbox
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_LANGUAGE "English"
 !include "ApplyExeProps.nsh"
-
-; The default installation directory for the portable binary.
-InstallDir "$DOCUMENTS\$R8\PCSX2 ${APP_VERSION}"
-
-; Installed files are housed here
-!include "SharedCore.nsh"
-
-Section "" INST_PORTABLE
-
-SetOutPath "$INSTDIR"
-File portable.ini
-SectionEnd
-
-Section "" SID_PCSX2
-SectionEnd
 
 Function ModifyRunCheckbox
 ${IfNot} ${SectionIsSelected} ${SID_PCSX2}

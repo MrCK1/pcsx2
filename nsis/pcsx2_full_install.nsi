@@ -23,9 +23,10 @@ InstallDir "$PROGRAMFILES\PCSX2 ${APP_VERSION}"
 
 !include "AdvUninstLog.nsh"
 
-!insertmacro MUI_PAGE_COMPONENTS
+;!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
-!insertmacro MUI_PAGE_INSTFILES
+;!insertmacro MUI_PAGE_INSTFILES
+!include "SharedCore.nsh"
 
 ; RequestExecutionLevel is admin for the full install, so we need to avoid transferring the elevated rights to the child process.
 !define MUI_FINISHPAGE_RUN "$WINDIR\explorer.exe"
@@ -50,7 +51,6 @@ Section ""
 Call UninstallPrevious
 SectionEnd
 
-!include "SharedCore.nsh"
 !include "SectionUninstaller.nsh"
 
 Section ""

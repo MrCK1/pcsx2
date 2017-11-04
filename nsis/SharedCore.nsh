@@ -9,20 +9,66 @@
   ;   user won't have permission enough to install it at all (sigh).
 
   ; (note!  the SetShellVarContext use in the uninstaller section must match this one!)
-
+Var CustomImage
+Var CustomImage.Bitmap
+  
   ;SetShellVarContext all
   ;SetShellVarContext current
+Page Custom PortableInstall_ComponentSelection Install_SelectionCheck
+Var PortableInstall_ComponentPage
+;Page Custom PortableInstall_InstdirSelection
+Var SharedCore_VersionStatic
+Var SharedCore_CoreCheckbox
+Var SharedCore_LanguageCheckbox
+Var SharedCore_SM_Checkbox
+Var SharedCore_DT_Checkbox
 
-Section "!${APP_NAME} (required)" SEC_CORE
+Function PortableInstall_ComponentSelection
+nsDialogs::Create /NOUNLOAD 1044
+Pop $PortableInstall_ComponentPage
 
-    SectionIn RO
+   ${NSD_CreateBitmap} 0u -193u 0u 300u ""
 
-  SetOutPath "$INSTDIR"
-    File ..\bin\pcsx2.exe
+    Pop $CustomImage
+
+    ${NSD_SetImage} $CustomImage "C:\Program Files (x86)\NSIS\Contrib\Graphics\Header\pcsx2banner.bmp" $CustomImage.Bitmap
+
+${NSD_CreateLabel} 10 65 95% 10u "Select PCSX2 components to install."
+Pop $SharedCore_VersionStatic
+
+${NSD_CreateCheckBox} 10 95 95% 10u "PCSX2 ${APP_VERSION} (required)."
+Pop $SharedCore_CoreCheckbox
+${NSD_Check} $SharedCore_CoreCheckbox
+EnableWindow $SharedCore_CoreCheckbox 0
+
+;${NSD_OnClick} $InstallMode_Full InstallMode_UsrWait
+${NSD_CreateCheckBox} 10 125 95% 10u "Additional Languages"
+Pop $SharedCore_LanguageCheckbox
+
+${NSD_CreateCheckBox} 10 155 95% 10u "Start Menu Shortcuts"
+Pop $SharedCore_SM_Checkbox
+
+${NSD_CreateCheckBox} 10 185 95% 10u "Desktop Shortcut"
+Pop $SharedCore_DT_Checkbox
+
+nsDialogs::Show
+FunctionEnd
+
+Function Install_SelectionCheck
+Pop $InstallMode_Portable
+${NSD_GetState} $InstallMode_Portable $1
+${NSD_GetState} $SharedCore_CoreCheckbox $2
+${NSD_GetState} $SharedCore_LanguageCheckbox $3
+${NSD_GetState} $SharedCore_SM_Checkbox $4
+${NSD_GetState} $SharedCore_DT_Checkbox $5
+
+${If} ${BST_CHECKED} == $2
+	SetOutPath "$INSTDIR"
+	;File portable.ini
+	File ..\bin\pcsx2.exe
     File ..\bin\GameIndex.dbf
     File ..\bin\cheats_ws.zip
     File ..\bin\PCSX2_keys.ini.default
-
   SetOutPath "$INSTDIR\Docs"
     File ..\bin\docs\*
 
@@ -40,23 +86,31 @@ Section "!${APP_NAME} (required)" SEC_CORE
     File /nonfatal ..\bin\Plugins\USBnull.dll
     File /nonfatal ..\bin\Plugins\DEV9null.dll
     File /nonfatal ..\bin\Plugins\FWnull.dll
-SectionEnd
+${EndIf}
 
-Section "Additional Languages" SEC_LANGS
+${NSD_GetState} $InstallMode_Portable $1
+
+${If} $InstallMode_Portable == $1
+${AndIf} ${BST_CHECKED} == $2 
+SetOutPath "$INSTDIR"
+File portable.ini
+${EndIf}
+
+${If} ${BST_CHECKED} == $3
     SetOutPath $INSTDIR\Langs
     File /nonfatal /r ..\bin\Langs\*.mo
-SectionEnd
+${EndIf}
 
-!include "SharedShortcuts.nsh"
+${If} ${BST_CHECKED} == $4
 
-LangString DESC_CORE       ${LANG_ENGLISH} "Core components (binaries, plugins, documentation, etc)."
-LangString DESC_STARTMENU  ${LANG_ENGLISH} "Adds shortcuts for PCSX2 to the start menu (all users)."
-LangString DESC_DESKTOP    ${LANG_ENGLISH} "Adds a shortcut for PCSX2 to the desktop (all users)."
-LangString DESC_LANGS      ${LANG_ENGLISH} "Adds additional languages other than the system default to PCSX2."
+  ; CreateShortCut gets the working directory from OutPath
+  SetOutPath "$INSTDIR"
+  CreateShortCut "$SMPROGRAMS\${APP_NAME}.lnk"                "${APP_EXE}"         ""    "${APP_EXE}"       0
+${EndIf}
 
-  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_CORE}        $(DESC_CORE)
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_STARTMENU}   $(DESC_STARTMENU)
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP}     $(DESC_DESKTOP)
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_LANGS}       $(DESC_LANGS)
-  !insertmacro MUI_FUNCTION_DESCRIPTION_END
+${If} ${BST_CHECKED} == $5
+  ; CreateShortCut gets the working directory from OutPath
+  SetOutPath "$INSTDIR"
+  CreateShortCut "$DESKTOP\${APP_NAME}.lnk"            "${APP_EXE}"      "" "${APP_EXE}"     0 "" "" "A Playstation 2 Emulator"
+${EndIf}
+FunctionEnd
