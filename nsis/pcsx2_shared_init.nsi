@@ -153,7 +153,7 @@ Pop $InstallMode_Dialog
 
     Pop $CustomImage_Portable
 
-    ${NSD_SetImage} $CustomImage_Portable "C:\Program Files (x86)\NSIS\Contrib\Graphics\Header\pcsx2banner.bmp" $CustomImage_Portable.Bitmap
+    ${NSD_SetImage} $CustomImage_Portable "banner.bmp" $CustomImage_Portable.Bitmap
 	
     GetDlgItem $InstallMode_DlgBack $HWNDPARENT 3
     EnableWindow $InstallMode_DlgBack 0

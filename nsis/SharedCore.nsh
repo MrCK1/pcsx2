@@ -31,7 +31,7 @@ Pop $PortableInstall_ComponentPage
 
     Pop $CustomImage
 
-    ${NSD_SetImage} $CustomImage "C:\Program Files (x86)\NSIS\Contrib\Graphics\Header\pcsx2banner.bmp" $CustomImage.Bitmap
+    ${NSD_SetImage} $CustomImage "banner.bmp" $CustomImage.Bitmap
 
 ${NSD_CreateLabel} 10 65 95% 10u "Select PCSX2 components to install."
 Pop $SharedCore_VersionStatic
