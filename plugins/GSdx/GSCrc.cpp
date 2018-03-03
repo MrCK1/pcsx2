@@ -554,6 +554,11 @@ CRC::Game CRC::m_games[] =
 	{0x2B58234D, TribesAerialAssault, US, 0},
 	{0x4D22DB95, Whiplash, US, 0},
 	{0xB1BE3E51, Whiplash, EU, 0},
+
+	// Games that can use one or more blending modes
+	{0x79B8A95F, DevilMayCry, US, 0},
+	{0x3BAEBCC3, TombRaiderAngelofDarkness, US, 0},
+	{0xC2144770, TSTTB, US, 0 },
 };
 
 std::map<uint32, CRC::Game*> CRC::m_map;

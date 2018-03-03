@@ -224,6 +224,7 @@ public:
 	bool m_NTSC_Saturation;
 	bool m_nativeres;
 	int m_mipmap;
+	int m_blending_unit_accuracy;
 
 	static int s_n;
 	bool s_dump;

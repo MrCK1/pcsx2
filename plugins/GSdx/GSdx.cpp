@@ -292,12 +292,16 @@ void GSdxApp::Init()
 		GSSetting(CRCHackLevel::Aggressive, "Aggressive", ""),
 	};
 
-	m_gs_acc_blend_level.push_back(GSSetting(0, "None", "Fastest"));
-	m_gs_acc_blend_level.push_back(GSSetting(1, "Basic", "Recommended low-end PC"));
-	m_gs_acc_blend_level.push_back(GSSetting(2, "Medium", ""));
-	m_gs_acc_blend_level.push_back(GSSetting(3, "High", "Recommended high-end PC"));
-	m_gs_acc_blend_level.push_back(GSSetting(4, "Full", "Very Slow"));
-	m_gs_acc_blend_level.push_back(GSSetting(5, "Ultra", "Ultra Slow"));
+	m_gs_acc_blend_level = {
+		//GSSetting(BUAccuracy::Automatic_Basic, "Automatic (Basic)", "Low/Medium performance cost"),
+		GSSetting(BUAccuracy::Automatic_Extra, "Automatic (Extra)", "High performance cost"),
+		GSSetting(BUAccuracy::None, "None", "Fastest"),
+		GSSetting(BUAccuracy::Basic, "Basic", "Reccomended for low-end PCs"),
+		GSSetting(BUAccuracy::Medium, "Medium", ""),
+		GSSetting(BUAccuracy::High, "High", "Reccomended for high-end PCs"),
+		GSSetting(BUAccuracy::Full, "Full", "Higher performance cost, required for a few games"),
+		GSSetting(BUAccuracy::Ultra, "Ultra", "Used for debugging purposes"),
+	};
 
 	m_gs_tv_shaders.push_back(GSSetting(0, "None", ""));
 	m_gs_tv_shaders.push_back(GSSetting(1, "Scanline filter", ""));
@@ -351,7 +355,7 @@ void GSdxApp::Init()
 #endif
 
 	m_default_configuration["aa1"]                                        = "0";
-	m_default_configuration["accurate_blending_unit"]                     = "1";
+	m_default_configuration["accurate_blending_unit"]                     = std::to_string(static_cast<int8>(BUAccuracy::None));
 	m_default_configuration["accurate_date"]                              = "0";
 	m_default_configuration["AspectRatio"]                                = "1";
 	m_default_configuration["capture_enabled"]                            = "0";

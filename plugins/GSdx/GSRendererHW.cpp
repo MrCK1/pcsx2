@@ -34,6 +34,7 @@ GSRendererHW::GSRendererHW(GSTextureCache* tc)
 	, m_lod(GSVector2i(0,0))
 {
 	m_mipmap = theApp.GetConfigI("mipmap_hw");
+	m_blending_unit_accuracy = theApp.GetConfigI("accurate_blending_unit");
 	m_upscale_multiplier = theApp.GetConfigI("upscale_multiplier");
 	m_large_framebuffer  = theApp.GetConfigB("large_framebuffer");
 	if (theApp.GetConfigB("UserHacks")) {
@@ -216,6 +217,56 @@ void GSRendererHW::SetGameCRC(uint32 crc, int options)
 			break;
 		default:
 			m_mipmap = static_cast<int>(HWMipmapLevel::Off);
+			break;
+
+		}
+	}
+
+	// 
+//	if (theApp.GetConfigT<BUAccuracy>("accurate_blending_unit") == BUAccuracy::Automatic_Basic) {
+//		switch (CRC::Lookup(crc).title) {
+//		case CRC::DevilMayCry:
+//		case CRC::GT4:
+//		case CRC::TombRaiderAngelofDarkness:
+//			case CRC::TSTTB:
+
+//			m_blending_unit_accuracy = static_cast<int>(BUAccuracy::Basic);
+//			break;
+
+			//m_blending_unit_accuracy = static_cast<int>(BUAccuracy::Medium);
+
+//		default:
+
+			// Included for the rare case when a game doesn't use blending
+//			m_blending_unit_accuracy = static_cast<int>(BUAccuracy::Basic);
+//			break;
+//		}
+//	}
+
+	// Use a more expensive blending if the game supports it. 
+	// CRCs added in this section should generally use the highest blending option that doesn't cause a slowdown on high-end systems.
+	if (theApp.GetConfigT<BUAccuracy>("accurate_blending_unit") == BUAccuracy::Automatic_Extra) {
+		switch (CRC::Lookup(crc).title) {
+		
+		case CRC::DevilMayCry:
+		case CRC::TSTTB:
+			//m_blending_unit_accuracy = static_cast<int>(BUAccuracy::Ultra);
+			break;
+		case CRC::GT4:
+			//m_blending_unit_accuracy = static_cast<int>(BUAccuracy::High);
+
+
+
+		// Some titles don't require more then basic/medium blending, so let's not waste perf for nothing!
+		case CRC::TombRaiderAngelofDarkness:
+			//m_blending_unit_accuracy = static_cast<int>(BUAccuracy::Basic);
+
+			//m_blending_unit_accuracy = static_cast<int>(BUAccuracy::High);
+
+
+		default:
+			m_blending_unit_accuracy = static_cast<int>(BUAccuracy::None);
+			printf("Blending Accuracy is", m_blending_unit_accuracy);
 			break;
 		}
 	}

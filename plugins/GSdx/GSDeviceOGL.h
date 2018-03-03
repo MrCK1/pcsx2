@@ -412,6 +412,7 @@ public:
 	uint32 m_msaa;				// Level of Msaa
 	int m_force_texture_clear;
 	int m_mipmap;
+	int m_blending_unit_accuracy;
 	TriFiltering m_filter;
 
 	static bool m_debug_gl_call;

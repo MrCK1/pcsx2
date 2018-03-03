@@ -1457,3 +1457,15 @@ enum class CRCHackLevel : int8
 	Full,
 	Aggressive
 };
+
+enum class BUAccuracy : int
+{
+	//Automatic_Basic = -1,
+	Automatic_Extra = -1,
+	None,
+	Basic,
+	Medium,
+	High,
+	Full,
+	Ultra,
+};
