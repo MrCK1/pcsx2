@@ -18,33 +18,41 @@ Section "!${APP_NAME} (required)" SEC_CORE
     SectionIn RO
 
   SetOutPath "$INSTDIR"
+  ; Test the INSTDIR directory to make sure the user has permissions.
+  ClearErrors
+  FileOpen $R0 $INSTDIR\tmp.dat w
+  FileClose $R0
+  Delete $INSTDIR\tmp.dat
+${If} ${Errors}
+  Abort
+${EndIf}
     File ..\bin\pcsx2.exe
     File ..\bin\GameIndex.dbf
     File ..\bin\cheats_ws.zip
     File ..\bin\PCSX2_keys.ini.default
 
-  SetOutPath "$INSTDIR\Docs"
+  SetOutPath "$INSTDIR\docs"
     File ..\bin\docs\*
 
-  SetOutPath "$INSTDIR\Shaders"
+  SetOutPath "$INSTDIR\shaders"
     File ..\bin\shaders\GSdx.fx
     File ..\bin\shaders\GSdx_FX_Settings.ini
 
-  SetOutPath "$INSTDIR\Plugins"
-    File /nonfatal ..\bin\Plugins\gsdx32-sse2.dll
-    File /nonfatal ..\bin\Plugins\gsdx32-sse4.dll
-    File /nonfatal ..\bin\Plugins\gsdx32-avx2.dll
-    File /nonfatal ..\bin\Plugins\spu2-x.dll
-    File /nonfatal ..\bin\Plugins\cdvdGigaherz.dll
-    File /nonfatal ..\bin\Plugins\lilypad.dll
-    File /nonfatal ..\bin\Plugins\USBnull.dll
-    File /nonfatal ..\bin\Plugins\DEV9null.dll
-    File /nonfatal ..\bin\Plugins\FWnull.dll
+  SetOutPath "$INSTDIR\plugins"
+    File /nonfatal ..\bin\plugins\gsdx32-sse2.dll
+    File /nonfatal ..\bin\plugins\gsdx32-sse4.dll
+    File /nonfatal ..\bin\plugins\gsdx32-avx2.dll
+    File /nonfatal ..\bin\plugins\spu2-x.dll
+    File /nonfatal ..\bin\plugins\cdvdGigaherz.dll
+    File /nonfatal ..\bin\plugins\lilypad.dll
+    File /nonfatal ..\bin\plugins\USBnull.dll
+    File /nonfatal ..\bin\plugins\DEV9null.dll
+    File /nonfatal ..\bin\plugins\FWnull.dll
 SectionEnd
 
 Section "Additional Languages" SEC_LANGS
-    SetOutPath $INSTDIR\Langs
-    File /nonfatal /r ..\bin\Langs\*.mo
+    SetOutPath $INSTDIR\langs
+    File /nonfatal /r ..\bin\langs\*.mo
 SectionEnd
 
 !include "SharedShortcuts.nsh"

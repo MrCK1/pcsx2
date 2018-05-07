@@ -180,6 +180,8 @@ ${NSD_GetState} $InstallMode_Full $0
 ${NSD_GetState} $InstallMode_Portable $1
 
 ${If} ${BST_CHECKED} == $0
+GetDlgItem $InstallMode_DlgNext $HWNDPARENT 1
+SendMessage $InstallMode_DlgNext ${BCM_SETSHIELD} 0 1
 SetOutPath "$TEMP"
 File "pcsx2-${APP_VERSION}-include_standard.exe"
 ExecShell open "$TEMP\pcsx2-${APP_VERSION}-include_standard.exe"
