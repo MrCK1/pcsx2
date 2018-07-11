@@ -142,9 +142,11 @@ Function InstallMode
 nsDialogs::Create /NOUNLOAD 1018
 Pop $InstallMode_Dialog
 
+; Enable the back button for the InstallMode dialog.
     GetDlgItem $InstallMode_DlgBack $HWNDPARENT 3
     EnableWindow $InstallMode_DlgBack 0
 
+; Disable the next button for the InstallMode dialog, it will be reenabled when the user makes a selection.
     GetDlgItem $InstallMode_DlgNext $HWNDPARENT 1
     EnableWindow $InstallMode_DlgNext 0
 
@@ -154,6 +156,7 @@ Pop $InstallMode_Label
 ${NSD_CreateRadioButton} 0 35 100% 10u "Full Installation"
 Pop $InstallMode_Full
 
+; Don't let user select a full install if they don't have admin privileges, that would be bad.
 ${If} $IsAdmin == 0
 EnableWindow $InstallMode_Full 0
 ${EndIf}
@@ -163,8 +166,12 @@ ${NSD_CreateLabel} 10 55 100% 20u "PCSX2 will be installed in Program Files unle
 
 ${NSD_CreateRadioButton} 0 95 100% 10u "Portable Installation"
 Pop $InstallMode_Portable
-    ${NSD_OnClick} $InstallMode_Portable InstallMode_UsrWait
-    ${NSD_CreateLabel} 10 115 100% 20u "Install PCSX2 to any directory you want. Choose this option if you prefer to have all of your files in the same folder or frequently update PCSX2 through Orphis' Buildbot."
+
+${NSD_OnClick} $InstallMode_Portable InstallMode_UsrWait
+${NSD_CreateLabel} 10 115 100% 20u "Install PCSX2 to any directory you want. Choose this option if you prefer to have all of your files in the same folder or frequently update PCSX2 through Orphis' Buildbot."
+
+${NSD_GetState} $InstallMode_Full $0
+${NSD_GetState} $InstallMode_Portable $1
 
 nsDialogs::Show
 
@@ -173,6 +180,11 @@ FunctionEnd
 Function InstallMode_UsrWait
 GetDlgItem $InstallMode_DlgNext $HWNDPARENT 1
 EnableWindow $InstallMode_DlgNext 1
+
+${If} ${BST_CHECKED} == $1
+GetDlgItem $InstallMode_DlgNext $HWNDPARENT 1
+SendMessage $InstallMode_DlgNext ${BCM_SETSHIELD} 0 0
+${EndIf}
 FunctionEnd
 
 Function InstallModeLeave
@@ -180,8 +192,6 @@ ${NSD_GetState} $InstallMode_Full $0
 ${NSD_GetState} $InstallMode_Portable $1
 
 ${If} ${BST_CHECKED} == $0
-GetDlgItem $InstallMode_DlgNext $HWNDPARENT 1
-SendMessage $InstallMode_DlgNext ${BCM_SETSHIELD} 0 1
 SetOutPath "$TEMP"
 File "pcsx2-${APP_VERSION}-include_standard.exe"
 ExecShell open "$TEMP\pcsx2-${APP_VERSION}-include_standard.exe"

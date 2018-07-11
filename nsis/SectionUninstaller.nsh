@@ -30,9 +30,9 @@ Function un.onUninstSuccess
   ; And remove the various install dir(s) but only if they're clean of user content:
 
   RMDir "$DOCUMENTS\PCSX2"
-  RMDir "$INSTDIR\langs"
+  RMDir "$INSTDIR\Langs"
 
-  RMDir /r "$INSTDIR\plugins"
+  RMDir /r "$INSTDIR\Plugins"
   RMDir "$INSTDIR"
   FunctionEnd
 ; =======================================================================
@@ -74,7 +74,7 @@ Section "Un.Program and Plugins ${APP_NAME}"
 SectionEnd
 
 ; /o for optional and unticked by default
-Section /o "Un.Configuration files (Programs and Plugins)"
+Section /o "Un.Configuration files (GSdx, SPU2-X, Lilypad, ect.)"
   SetShellVarContext current
   RMDir /r "$DOCUMENTS\PCSX2\inis\"
 SectionEnd
@@ -96,8 +96,6 @@ SectionEnd
 
 ; /o for optional and unticked by default
 Section /o "Un.BIOS files"
-
   SetShellVarContext current
   RMDir /r "$DOCUMENTS\PCSX2\bios\"
-
 SectionEnd
