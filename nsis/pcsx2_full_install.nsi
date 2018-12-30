@@ -62,6 +62,8 @@ Section ""
   WriteRegStr   HKLM "${INSTDIR_REG_KEY}"  "Publisher"        "PCSX2 Team"
   WriteRegStr   HKLM "${INSTDIR_REG_KEY}"  "DisplayIcon"      "$INSTDIR\pcsx2.exe"
   WriteRegStr   HKLM "${INSTDIR_REG_KEY}"  "DisplayVersion"   "${APP_VERSION}"
+  WriteRegStr   HKLM "${INSTDIR_REG_KEY}"  "URLInfoAbout"     "https://pcsx2.net"
+  WriteRegStr   HKLM "${INSTDIR_REG_KEY}"  "HelpLink"         "https://forums.pcsx2.net"
   ${GetSize} "$INSTDIR" "/S=0K" $6 $7 $8
   IntFmt $6 "0x%08X" $6
   WriteRegDWORD HKLM "${INSTDIR_REG_KEY}"  "EstimatedSize"    "$6"
