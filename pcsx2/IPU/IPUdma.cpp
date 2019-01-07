@@ -194,17 +194,17 @@ int IPU1dma()
 
 void IPU0dma()
 {
-	if(!ipuRegs.ctrl.OFC) 
+	if(!ipuRegs.ctrl.OFC)
 	{
 		IPU_INT_FROM( 64 );
-		IPUProcessInterrupt();
+		//IPUProcessInterrupt();
 		return;
 	}
 
 	int readsize;
 	tDMA_TAG* pMem;
 
-	if ((!(ipu0ch.chcr.STR) || (cpuRegs.interrupt & (1 << DMAC_FROM_IPU))) || (ipu0ch.qwc == 0))
+	if ((!(ipu0ch.chcr.STR) || (cpuRegs.interrupt & (1 << DMAC_FROM_IPU))) && (ipu0ch.qwc == 0))
 	{
 		DevCon.Warning("How??");
 		return;
@@ -213,7 +213,7 @@ void IPU0dma()
 	pxAssert(!(ipu0ch.chcr.TTE));
 
 	IPU_LOG("dmaIPU0 chcr = %lx, madr = %lx, qwc  = %lx",
-	        ipu0ch.chcr._u32, ipu0ch.madr, ipu0ch.qwc);
+		ipu0ch.chcr._u32, ipu0ch.madr, ipu0ch.qwc);
 
 	pxAssert(ipu0ch.chcr.MOD == NORMAL_MODE);
 
@@ -224,39 +224,37 @@ void IPU0dma()
 
 	ipu0ch.madr += readsize << 4;
 	ipu0ch.qwc -= readsize; // note: qwc is u16
-
-	
 		if (dmacRegs.ctrl.STS == STS_fromIPU)   // STS == fromIPU
 		{
 			dmacRegs.stadr.ADDR = ipu0ch.madr;
 			switch (dmacRegs.ctrl.STD)
 			{
-				case NO_STD:
-					break;
-				case STD_GIF: // GIF
-					//DevCon.Warning("GIFSTALL");
-					g_nDMATransfer.GIFSTALL = true;
-					break;
-				case STD_VIF1: // VIF
-					//DevCon.Warning("VIFSTALL");
-					g_nDMATransfer.VIFSTALL = true;
-					break;
-				case STD_SIF1:
+			case NO_STD:
+				break;
+			case STD_GIF: // GIF
+				//DevCon.Warning("GIFSTALL");
+				g_nDMATransfer.GIFSTALL = true;
+				break;
+			case STD_VIF1: // VIF
+				//DevCon.Warning("VIFSTALL");
+				g_nDMATransfer.VIFSTALL = true;
+				break;
+			case STD_SIF1:
 				//	DevCon.Warning("SIFSTALL");
-					g_nDMATransfer.SIFSTALL = true;
-					break;
+				g_nDMATransfer.SIFSTALL = true;
+				break;
 			}
 		}
 		//Fixme ( voodoocycles ):
 		//This was IPU_INT_FROM(readsize*BIAS );
 		//This broke vids in Digital Devil Saga
 		//Note that interrupting based on totalsize is just guessing..
-	
-	IPU_INT_FROM( readsize * BIAS );
-	if(ipuRegs.ctrl.IFC > 0) IPUProcessInterrupt();
 
-	//return readsize;
-}
+		IPU_INT_FROM( readsize * BIAS );
+		if(ipuRegs.ctrl.IFC > 0) IPUProcessInterrupt();
+
+		//return readsize;
+	}
 
 __fi void dmaIPU0() // fromIPU
 {
