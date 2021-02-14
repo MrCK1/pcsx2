@@ -16,17 +16,11 @@
 #include "PrecompiledHeader.h"
 #include "Global.h"
 
-// For escape timer, so as not to break GSDX+DX9.
-#include <time.h>
-#include <fstream>
-#include <iomanip>
-#include <sstream>
 #include "resource_pad.h"
 #include "InputManager.h"
 #include "PADConfig.h"
 #include "PAD.h"
 
-#define PADdefs
 
 #include "DeviceEnumerator.h"
 #ifdef _MSC_VER
@@ -34,10 +28,8 @@
 #include "HidDevice.h"
 #endif
 #include "KeyboardQueue.h"
-#include "svnrev.h"
 #include "DualShock3.h"
 #include "AppConfig.h"
-#include <timeapi.h>
 #include "Utilities/pxStreams.h"
 #include "AppCoreThread.h"
 
@@ -847,11 +839,6 @@ s32 PADinit()
 	}
 	int port = (flags & 3);
 
-#if defined(PCSX2_DEBUG) && defined(_MSC_VER)
-	int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
-	tmpFlag |= _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF;
-	_CrtSetDbgFlag(tmpFlag);
-#endif
 	for (int i = 2; i > 0; i--)
 	{
 		port = i;
