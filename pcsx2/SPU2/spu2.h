@@ -22,8 +22,7 @@
 extern Threading::MutexRecursive mtx_SPU2Status;
 
 s32 SPU2init();
-s32 SPU2reset();
-s32 SPU2ps1reset();
+s32 SPU2reset(bool isRunningPSXMode);
 s32 SPU2open(void* pDsp);
 void SPU2close();
 void SPU2shutdown();

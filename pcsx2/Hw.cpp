@@ -65,12 +65,7 @@ void hwReset()
 	psHu32(DMAC_ENABLEW) = 0x1201;
 	psHu32(DMAC_ENABLER) = 0x1201;
 
-	if ((psxHu32(HW_ICFG) & (1 << 3)))
-	{
-		SPU2ps1reset();
-	}
-
-	SPU2reset();
+	SPU2reset(false);
 
 	sifReset();
 
