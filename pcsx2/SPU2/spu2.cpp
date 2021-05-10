@@ -164,9 +164,9 @@ void SPU2writeDMA7Mem(u16* pMem, u32 size)
 
 s32 SPU2reset(PS2Modes isRunningPSXMode)
 {
-	u32 requiredSampleRate = (isRunningPSXMode == PSX) ? 44100 : 48000;
+	u32 requiredSampleRate = (isRunningPSXMode == PS2Modes::PSX) ? 44100 : 48000;
 
-	if (isRunningPSXMode)
+	if (isRunningPSXMode == PS2Modes::PS2)
 	{
 		memset(spu2regs, 0, 0x010000);
 		memset(_spu2mem, 0, 0x200000);
@@ -249,7 +249,7 @@ s32 SPU2init()
 		}
 	}
 
-	SPU2reset(PSX);
+	SPU2reset(PS2Modes::PSX);
 
 	DMALogOpen();
 	InitADSR();
