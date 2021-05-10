@@ -128,7 +128,7 @@ void SPU2writeDMA4Mem(u16* pMem, u32 size) // size now in 16bit units
 void SPU2interruptDMA4()
 {
 	FileLog("[%10d] SPU2 interruptDMA4\n", Cycles);
-	if(Cores[0].DmaMode)
+	if (Cores[0].DmaMode)
 		Cores[0].Regs.STATX |= 0x80;
 	Cores[0].Regs.STATX &= ~0x400;
 	Cores[0].TSA = Cores[0].ActiveTSA;
@@ -162,11 +162,11 @@ void SPU2writeDMA7Mem(u16* pMem, u32 size)
 	Cores[1].DoDMAwrite(pMem, size);
 }
 
-s32 SPU2reset(bool isRunningPSXMode)
+s32 SPU2reset(PS2Modes isRunningPSXMode)
 {
-	u32 requiredSampleRate = isRunningPSXMode ? 44100 : 48000;
+	u32 requiredSampleRate = (isRunningPSXMode == PSX) ? 44100 : 48000;
 
-	if (!isRunningPSXMode)
+	if (isRunningPSXMode)
 	{
 		memset(spu2regs, 0, 0x010000);
 		memset(_spu2mem, 0, 0x200000);
@@ -184,16 +184,16 @@ s32 SPU2reset(bool isRunningPSXMode)
 		SndBuffer::Cleanup();
 		SndBuffer::Init();
 	}
-		try
-		{
-			SPU2init();
-		}
-		catch (std::exception& ex)
-		{
-			fprintf(stderr, "SPU2 Error: Could not initialize device, or something.\nReason: %s", ex.what());
-			SPU2close();
-			return -1;
-		}
+	try
+	{
+		SPU2init();
+	}
+	catch (std::exception& ex)
+	{
+		fprintf(stderr, "SPU2 Error: Could not initialize device, or something.\nReason: %s", ex.what());
+		SPU2close();
+		return -1;
+	}
 	return 0;
 }
 
@@ -249,7 +249,7 @@ s32 SPU2init()
 		}
 	}
 
-	SPU2reset(false);
+	SPU2reset(PSX);
 
 	DMALogOpen();
 	InitADSR();
